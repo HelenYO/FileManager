@@ -19,13 +19,14 @@ public:
 
 private slots:
     void select_directory();
-    void scan_directory(QString const& dir);
+    void scan_directory();
     void show_about_dialog();
 
     void write_dfs(QDir const& d);
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
+    QString curDir;
 };
 
 #endif // MAINWINDOW_H

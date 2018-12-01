@@ -20,6 +20,7 @@ public:
 private slots:
     void select_directory();
     void scan_directory();
+    void find_copies(std::map<QByteArray, QVector<std::pair<QString, int>>> &map, std::vector<std::ifstream> &streams, int degree);
     void show_about_dialog();
 
     void write_dfs(QDir const& d);

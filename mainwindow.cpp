@@ -60,7 +60,7 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
 
 
         sha.reset();
-        std::vector<char> buffer(unsigned long long(1 << degree));
+        std::vector<char> buffer((unsigned long long)(1 << degree));
 
         streams[file.second].read(buffer.data(), (1 << degree));
         gcount = static_cast<int>(streams[file.second].gcount());
@@ -159,7 +159,7 @@ void main_window::scan_directory() {
             //рекурсивный поиск
             for (auto vec: hashsFirstIter) {
 
-                std::vector<std::ifstream> streams(unsigned long long(vec.second.size()));
+                std::vector<std::ifstream> streams((unsigned long long)(vec.second.size()));
                 for (auto pair: vec.second) {
                     std::ifstream fin(pair.first.toStdString(), std::ios::binary);
                     streams[pair.second] = std::move(fin);

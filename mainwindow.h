@@ -23,8 +23,6 @@ private slots:
     void find_copies(QVector<std::pair<QString, int>> vec , std::vector<std::ifstream> &streams, int degree);
     void show_about_dialog();
 
-    void write_dfs(QDir const& d);
-
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     QString curDir;

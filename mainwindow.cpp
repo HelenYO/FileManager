@@ -3,9 +3,7 @@
 
 #include <QCommonStyle>
 #include <QDesktopWidget>
-#include <QDir>
 #include <QFileDialog>
-#include <QFileInfo>
 #include <QMessageBox>
 #include <QDirIterator>
 #include <QCryptographicHash>
@@ -28,21 +26,16 @@ main_window::main_window(QWidget *parent)
 
     QCommonStyle style;
 
-    //ui->actionScan_Directory->setIcon(style.standardIcon(QCommonStyle::SP_DialogOpenButton));
     ui->actionExit->setIcon(style.standardIcon(QCommonStyle::SP_DialogCloseButton));
-    //ui->actionAbout->setIcon(style.standardIcon(QCommonStyle::SP_DialogHelpButton));
 
     connect(ui->actionScan_Directory, &QAction::triggered, this, &main_window::select_directory);
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
-    //connect(ui->actionAbout, &QAction::triggered, this, &main_window::show_about_dialog);
 
     connect(ui->pushButton, &QPushButton::clicked, this, &main_window::select_directory);
     connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::scan_directory);
-
-
 }
 
-main_window::~main_window() {}
+main_window::~main_window() = default;
 
 void main_window::select_directory() {
     QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
@@ -51,24 +44,10 @@ void main_window::select_directory() {
 
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
+    ui->lineEdit->clear();
     ui->lineEdit->insert(dir);
     ui->pushButton_2->setEnabled(true);
 
-}
-
-void main_window::write_dfs(QDir const &d) {
-    QDir dir(d);
-    for (QString dirName : dir.entryList(QDir::Dirs)) {
-        if (dirName != "." && dirName != "..") {
-            QDir curDir = dir;
-            curDir.cd(dirName);
-            QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
-            QFileInfo file_info(dirName);
-            item->setText(0, file_info.fileName());
-            item->setText(1, QString::number(file_info.size()));
-            write_dfs(curDir);
-        }
-    }
 }
 
 void main_window::find_copies(QVector<std::pair<QString, int>> vec,
@@ -77,40 +56,36 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
     QCryptographicHash sha(QCryptographicHash::Sha3_256);
     std::map<QByteArray, QVector<std::pair<QString, int>>> hashs;
     int gcount = 0;
-    for(std::pair<QString, int> file : vec) {
+    for (std::pair<QString, int> file : vec) {
 
 
-            sha.reset();
-            std::vector<char> buffer((1 << degree));
+        sha.reset();
+        std::vector<char> buffer(unsigned long long(1 << degree));
 
-            //std::cout << j->second.size() << "\n";
-//            assert((std::cout << ("UU " + name.first.toStdString() + " ") << name.second << " " << streams.size()
-//                              << "\n") && name.second < streams.size());
+        streams[file.second].read(buffer.data(), (1 << degree));
+        gcount = static_cast<int>(streams[file.second].gcount());
+        sha.addData(buffer.data(), gcount);
+        QByteArray res = sha.result();
+        std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.find(res);
+        if (cur == hashs.end()) {
+            QVector<std::pair<QString, int>> temp;
+            temp.push_back(file);
+            hashs.insert({res, temp});
+        } else {
+            cur->second.push_back(file);
+        }
 
-            streams[file.second].read(buffer.data(), (1 << degree));
-            gcount = static_cast<int>(streams[file.second].gcount());
-            sha.addData(buffer.data(), gcount);
-            QByteArray res = sha.result();
-            std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.find(res);
-            if (cur == hashs.end()) {
-                QVector<std::pair<QString, int>> temp;
-                temp.push_back(file);
-                hashs.insert({res, temp});
-            } else {
-                cur->second.push_back(file);
-            }
-
-            if (gcount == 0) {
-                streams[file.second].close();
-            }
+        if (gcount == 0) {
+            streams[file.second].close();
+        }
 
     }
     if (gcount == 0) {
-        for (std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.begin();
+        for (auto cur = hashs.begin();
              cur != hashs.end(); ++cur) {
             if (cur->second.size() != 1) {
                 wasDuplicate = true;
-                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+                auto *item = new QTreeWidgetItem(ui->treeWidget);
                 item->setText(0, QString("Found ") + QString::number(cur->second.size()) + QString(" duplicates"));
 
                 QFileInfo file_info_temp(cur->second[0].first);
@@ -128,7 +103,7 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
         }
     } else {
         for (auto ivec : hashs)
-        find_copies(ivec.second, streams, degree + 1);
+            find_copies(ivec.second, streams, degree + 1);
     }
 }
 
@@ -163,7 +138,7 @@ void main_window::scan_directory() {
                 std::ifstream fin(name.toStdString(), std::ios::binary);
                 int gcount = 0;
                 if (file.open(QIODevice::ReadOnly)) {
-                    std::array<char, 1> buffer{};
+                    std::array<char, 4> buffer{};
                     fin.read(buffer.data(), buffer.size());
                     gcount = static_cast<int>(fin.gcount());
                     sha.addData(buffer.data(), gcount);
@@ -184,23 +159,11 @@ void main_window::scan_directory() {
             //рекурсивный поиск
             for (auto vec: hashsFirstIter) {
 
-                std::vector<std::ifstream> streams(vec.second.size());
+                std::vector<std::ifstream> streams(unsigned long long(vec.second.size()));
                 for (auto pair: vec.second) {
                     std::ifstream fin(pair.first.toStdString(), std::ios::binary);
                     streams[pair.second] = std::move(fin);
                 }
-
-                std::cout << "Streams : " << streams.size() << " " << vec.second.size() << "\n";
-                for (int i = 0; i < streams.size(); ++i) {
-                    std::cout << (vec.second[i].second) << " ";
-                }
-                std::cout << "\n";
-
-//                if(streams.size() == 2) {
-//                    std::cout << "I was here\n";
-//                }
-
-                //find_copies(hashsFirstIter, streams, 0);
                 find_copies(vec.second, streams, 0);
             }
             //
@@ -211,10 +174,10 @@ void main_window::scan_directory() {
     time = std::clock() - time;
 
     if (!wasDuplicate) {
-        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+        auto *item = new QTreeWidgetItem(ui->treeWidget);
         item->setText(0, QString("Not Found Duplicates!)"));
     } else {
-        QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+        auto *item = new QTreeWidgetItem(ui->treeWidget);
         item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
                          QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
 

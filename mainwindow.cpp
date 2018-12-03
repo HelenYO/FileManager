@@ -71,64 +71,64 @@ void main_window::write_dfs(QDir const &d) {
     }
 }
 
-void main_window::find_copies(std::map<QByteArray, QVector<std::pair<QString, int>>> &map,
+void main_window::find_copies(QVector<std::pair<QString, int>> vec,
                               std::vector<std::ifstream> &streams, int degree) {
 
     QCryptographicHash sha(QCryptographicHash::Sha3_256);
-    for (auto j = map.begin(); j != map.end(); ++j) {
-        if (j->second.size() == 1) {
-            streams[j->second[0].second].close();
-            break;
-        }
-        std::map<QByteArray, QVector<std::pair<QString, int>>> hashs;
-        //for (QVector<std::pair<QString, int>> names: j->second) {
-        int gcount = 0;
-        for (std::pair<QString, int> name: j->second) {
+    std::map<QByteArray, QVector<std::pair<QString, int>>> hashs;
+    int gcount = 0;
+    for(std::pair<QString, int> file : vec) {
+
+
             sha.reset();
-            std::vector<char> buffer((1<< degree));
-            streams[name.second].read(buffer.data(), (1<< degree));
-            gcount = static_cast<int>(streams[name.second].gcount());
+            std::vector<char> buffer((1 << degree));
+
+            //std::cout << j->second.size() << "\n";
+//            assert((std::cout << ("UU " + name.first.toStdString() + " ") << name.second << " " << streams.size()
+//                              << "\n") && name.second < streams.size());
+
+            streams[file.second].read(buffer.data(), (1 << degree));
+            gcount = static_cast<int>(streams[file.second].gcount());
             sha.addData(buffer.data(), gcount);
             QByteArray res = sha.result();
             std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.find(res);
             if (cur == hashs.end()) {
                 QVector<std::pair<QString, int>> temp;
-                temp.push_back(name);
+                temp.push_back(file);
                 hashs.insert({res, temp});
             } else {
-                cur->second.push_back(name);
+                cur->second.push_back(file);
             }
 
-            if (gcount ==
-                0) {//то есть мы закончили считываие файла (еще есть случай что как раз закончили на размере буфера
-                streams[name.second].close();
+            if (gcount == 0) {
+                streams[file.second].close();
             }
-        }
-        if (gcount == 0) {
-            for (std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.begin();
-                 cur != hashs.end(); ++cur) {
-                if (cur->second.size() != 1) {
-                    wasDuplicate = true;
-                    QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
-                    item->setText(0, QString("Found ") + QString::number(cur->second.size()) + QString(" duplicates"));
 
-                    QFileInfo file_info_temp(cur->second.front().first);
-                    item->setText(1,
-                                  QString::number(file_info_temp.size() * (cur->second.size() - 1)) +
-                                  QString(" bytes"));
-                    sum += file_info_temp.size() * (cur->second.size() - 1);
-                    for (auto child : cur->second) {
-                        QTreeWidgetItem *childItem = new QTreeWidgetItem();
-                        childItem->setText(0, child.first);
-                        item->addChild(childItem);
-                    }
-                    ui->treeWidget->addTopLevelItem(item);
+    }
+    if (gcount == 0) {
+        for (std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.begin();
+             cur != hashs.end(); ++cur) {
+            if (cur->second.size() != 1) {
+                wasDuplicate = true;
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget);
+                item->setText(0, QString("Found ") + QString::number(cur->second.size()) + QString(" duplicates"));
+
+                QFileInfo file_info_temp(cur->second[0].first);
+                item->setText(1,
+                              QString::number(file_info_temp.size() * (cur->second.size() - 1)) +
+                              QString(" bytes"));
+                sum += file_info_temp.size() * (cur->second.size() - 1);
+                for (auto child : cur->second) {
+                    QTreeWidgetItem *childItem = new QTreeWidgetItem();
+                    childItem->setText(0, child.first);
+                    item->addChild(childItem);
                 }
+                ui->treeWidget->addTopLevelItem(item);
             }
-        } else {
-            find_copies(hashs, streams, degree + 1);
         }
-        //}
+    } else {
+        for (auto ivec : hashs)
+        find_copies(ivec.second, streams, degree + 1);
     }
 }
 
@@ -138,26 +138,26 @@ void main_window::scan_directory() {
     QDirIterator it(curDir, QDir::Files, QDirIterator::Subdirectories);
 
     ui->treeWidget->clear();
-    QMap<qint64, QVector<QString>> files;
+    std::map<qint64, QVector<QString>> files;
     while (it.hasNext()) {
         QFileInfo file_info(it.next());
         qint64 sizeT = file_info.size();
         if (files.find(sizeT) != files.end()) {
-            files.find(sizeT)->push_back(file_info.filePath());
+            files.find(sizeT)->second.push_back(file_info.filePath());
         } else {
             QVector<QString> tempi;
             tempi.push_back(file_info.filePath());
-            files.insert(sizeT, tempi);
+            files.insert({sizeT, tempi});
         }
     }
 
     QCryptographicHash sha(QCryptographicHash::Sha3_256);
     for (auto i = files.begin(); i != files.end(); ++i) {
-        if (i->size() != 1) {
+        if (i->second.size() != 1) {
 
             //первая итерация, которая отсечет дофига
             std::map<QByteArray, QVector<std::pair<QString, int>>> hashsFirstIter;
-            for (auto name: (*i)) {
+            for (auto name: i->second) {
                 sha.reset();
                 QFile file(name);
                 std::ifstream fin(name.toStdString(), std::ios::binary);
@@ -175,11 +175,11 @@ void main_window::scan_directory() {
                     temp.push_back({name, 0});
                     hashsFirstIter.insert({res, temp});
                 } else {
-                    cur->second.push_back({name, cur->second.size()});
+                    int temp = cur->second.size();
+                    cur->second.push_back({name, temp});
                 }
             }
             //
-
 
             //рекурсивный поиск
             for (auto vec: hashsFirstIter) {
@@ -189,7 +189,19 @@ void main_window::scan_directory() {
                     std::ifstream fin(pair.first.toStdString(), std::ios::binary);
                     streams[pair.second] = std::move(fin);
                 }
-                find_copies(hashsFirstIter, streams, 0);
+
+                std::cout << "Streams : " << streams.size() << " " << vec.second.size() << "\n";
+                for (int i = 0; i < streams.size(); ++i) {
+                    std::cout << (vec.second[i].second) << " ";
+                }
+                std::cout << "\n";
+
+//                if(streams.size() == 2) {
+//                    std::cout << "I was here\n";
+//                }
+
+                //find_copies(hashsFirstIter, streams, 0);
+                find_copies(vec.second, streams, 0);
             }
             //
 

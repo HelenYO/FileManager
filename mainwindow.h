@@ -22,6 +22,8 @@ private slots:
     void scan_directory();
     void find_copies(QVector<std::pair<QString, int>> vec , std::vector<std::ifstream> &streams, int degree);
     void show_about_dialog();
+    void select_useless();
+    void delete_useless();
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;

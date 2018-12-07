@@ -33,6 +33,8 @@ main_window::main_window(QWidget *parent)
 
     connect(ui->pushButton, &QPushButton::clicked, this, &main_window::select_directory);
     connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::scan_directory);
+    connect(ui->pushButton_3, &QPushButton::clicked, this, &main_window::select_useless);
+    connect(ui->pushButton_4, &QPushButton::clicked, this, &main_window::delete_useless);
 }
 
 main_window::~main_window() = default;
@@ -47,6 +49,14 @@ void main_window::select_directory() {
     ui->lineEdit->clear();
     ui->lineEdit->insert(dir);
     ui->pushButton_2->setEnabled(true);
+
+}
+
+void main_window::select_useless(){
+
+}
+
+void main_window::delete_useless(){
 
 }
 

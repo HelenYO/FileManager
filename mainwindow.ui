@@ -71,6 +71,23 @@
       </column>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="text">
+       <string>Select useless files</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_4">
+      <property name="text">
+       <string>Delete!!</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QOpenGLWidget" name="openGLWidget"/>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">

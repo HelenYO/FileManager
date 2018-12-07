@@ -23,6 +23,7 @@ main_window::main_window(QWidget *parent)
     ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     setWindowTitle(QString("FileManager"));
     ui->pushButton_2->setEnabled(false);
+    ui->pushButton_4->setEnabled(false);
 
     QCommonStyle style;
 
@@ -35,6 +36,7 @@ main_window::main_window(QWidget *parent)
     connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::scan_directory);
     connect(ui->pushButton_3, &QPushButton::clicked, this, &main_window::select_useless);
     connect(ui->pushButton_4, &QPushButton::clicked, this, &main_window::delete_useless);
+
 }
 
 main_window::~main_window() = default;
@@ -53,11 +55,29 @@ void main_window::select_directory() {
 }
 
 void main_window::select_useless(){
-
+    for (int i = 0; i < ui->treeWidget->topLevelItemCount(); ++i) {
+        auto *top_item = ui->treeWidget->topLevelItem(i);
+        for (int j = 1; j < top_item->childCount(); j++) {
+            auto *child_item = top_item->child(j);
+            child_item->setSelected(true);
+        }
+    }
+    ui->pushButton_4->setEnabled(true);
 }
 
 void main_window::delete_useless(){
-
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "deleting useless",
+                                                              "All files will be deleted forever. \nDo you really want to continiue?");
+    if (reply == QMessageBox::Yes) {
+        QVector<QString> paths;
+        for (auto u : ui->treeWidget->selectedItems()) {
+            paths.push_back(u->text(0));
+            u->~QTreeWidgetItem();
+        }
+        for (int i = 0; i < paths.size(); i++) {
+            QFile(paths[i]).remove();
+        }
+    }
 }
 
 void main_window::find_copies(QVector<std::pair<QString, int>> vec,

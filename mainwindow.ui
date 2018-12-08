@@ -86,6 +86,13 @@
      </widget>
     </item>
     <item>
+     <widget class="QProgressBar" name="progressBar">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QOpenGLWidget" name="openGLWidget"/>
     </item>
    </layout>

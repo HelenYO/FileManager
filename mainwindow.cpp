@@ -13,6 +13,8 @@
 
 bool wasDuplicate = false;
 qint64 sum = 0;
+qint64 sumProgress = 0;
+qint64 sumProgressAll = 0;
 
 main_window::main_window(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -24,6 +26,7 @@ main_window::main_window(QWidget *parent)
     setWindowTitle(QString("FileManager"));
     ui->pushButton_2->setEnabled(false);
     ui->pushButton_4->setEnabled(false);
+    ui->progressBar->setValue(0);
 
     QCommonStyle style;
 
@@ -51,6 +54,7 @@ void main_window::select_directory() {
     ui->lineEdit->clear();
     ui->lineEdit->insert(dir);
     ui->pushButton_2->setEnabled(true);
+    ui->progressBar->setValue(0);
 
 }
 
@@ -71,7 +75,7 @@ void main_window::delete_useless(){
     if (reply == QMessageBox::Yes) {
         QVector<QString> paths;
         for (auto u : ui->treeWidget->selectedItems()) {
-            paths.push_back(u->text(0));
+            paths.push_back(curDir + '/' + u->text(0));
             u->~QTreeWidgetItem();
         }
         for (int i = 0; i < paths.size(); i++) {
@@ -111,8 +115,7 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
 
     }
     if (gcount == 0) {
-        for (auto cur = hashs.begin();
-             cur != hashs.end(); ++cur) {
+        for (auto cur = hashs.begin(); cur != hashs.end(); ++cur) {
             if (cur->second.size() != 1) {
                 wasDuplicate = true;
                 auto *item = new QTreeWidgetItem(ui->treeWidget);
@@ -125,11 +128,15 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
                 sum += file_info_temp.size() * (cur->second.size() - 1);
                 for (auto child : cur->second) {
                     QTreeWidgetItem *childItem = new QTreeWidgetItem();
-                    childItem->setText(0, child.first);
+                    //childItem->setText(0, child.first);
+                    childItem->setText(0, child.first.mid(curDir.length() + 1, child.first.length() - curDir.length() - 1));
                     item->addChild(childItem);
                 }
                 ui->treeWidget->addTopLevelItem(item);
             }
+            QFileInfo file_info_temp(cur->second[0].first);
+            sumProgress += cur->second.size() * file_info_temp.size();
+            ui->progressBar->setValue(100 * sumProgress / sumProgressAll);
         }
     } else {
         for (auto ivec : hashs)
@@ -139,8 +146,10 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
 
 void main_window::scan_directory() {
 
+
+    ui->progressBar->setValue(0);
     std::clock_t time = std::clock();
-    QDirIterator it(curDir, QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
 
     ui->treeWidget->clear();
     std::map<qint64, QVector<QString>> files;
@@ -156,6 +165,10 @@ void main_window::scan_directory() {
         }
     }
 
+    for(auto i = files.begin(); i != files.end(); ++i) {
+        sumProgressAll += i->second.size() * i->first;
+    }
+
     QCryptographicHash sha(QCryptographicHash::Sha3_256);
     for (auto i = files.begin(); i != files.end(); ++i) {
         if (i->second.size() != 1) {
@@ -167,7 +180,8 @@ void main_window::scan_directory() {
                 QFile file(name);
                 std::ifstream fin(name.toStdString(), std::ios::binary);
                 int gcount = 0;
-                if (file.open(QIODevice::ReadOnly)) {
+                //if (file.open(QIODevice::ReadOnly)) {
+                if (fin.is_open()) {
                     std::array<char, 4> buffer{};
                     fin.read(buffer.data(), buffer.size());
                     gcount = static_cast<int>(fin.gcount());
@@ -213,6 +227,9 @@ void main_window::scan_directory() {
 
     }
     sum = 0;
+    sumProgressAll = 0;
+    sumProgress = 0;
+    ui->progressBar->setValue(100);
 }
 
 void main_window::show_about_dialog() {

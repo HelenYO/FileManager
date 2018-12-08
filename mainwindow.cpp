@@ -143,7 +143,6 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
 
 void main_window::scan_directory() {
 
-
     ui->progressBar->setValue(0);
     std::clock_t time = std::clock();
     QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
@@ -177,7 +176,6 @@ void main_window::scan_directory() {
                 QFile file(name);
                 std::ifstream fin(name.toStdString(), std::ios::binary);
                 int gcount = 0;
-                //if (file.open(QIODevice::ReadOnly)) {
                 if (fin.is_open()) {
                     std::array<char, 4> buffer{};
                     fin.read(buffer.data(), buffer.size());
@@ -209,7 +207,6 @@ void main_window::scan_directory() {
                 find_copies(vec.second, streams, 0);
             }
             //
-
         }
     }
 

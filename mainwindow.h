@@ -28,6 +28,11 @@ private slots:
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     QString curDir;
+
+    bool wasDuplicate = false;
+    qint64 sum = 0;
+    qint64 sumProgress = 0;
+    qint64 sumProgressAll = 0;
 };
 
 #endif // MAINWINDOW_H

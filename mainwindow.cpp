@@ -11,10 +11,7 @@
 #include <iostream>
 
 
-bool wasDuplicate = false;
-qint64 sum = 0;
-qint64 sumProgress = 0;
-qint64 sumProgressAll = 0;
+
 
 main_window::main_window(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -94,7 +91,7 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
     for (std::pair<QString, int> file : vec) {
 
         sha.reset();
-        std::vector<char> buffer((unsigned long long)(1 << degree));
+        std::vector<char> buffer((1ull << degree));
         streams[file.second].read(buffer.data(), (1 << degree));
         gcount = static_cast<int>(streams[file.second].gcount());
         sha.addData(buffer.data(), gcount);
@@ -136,8 +133,10 @@ void main_window::find_copies(QVector<std::pair<QString, int>> vec,
             ui->progressBar->setValue((int)(100 * sumProgress / sumProgressAll));
         }
     } else {
-        for (auto ivec : hashs)
-            find_copies(ivec.second, streams, degree + 1);
+        for (auto ivec : hashs) {
+            if (degree < 20) find_copies(ivec.second, streams, degree + 1);
+            else find_copies(ivec.second, streams, degree);
+        }
     }
 }
 

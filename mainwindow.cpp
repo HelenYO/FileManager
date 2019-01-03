@@ -1,16 +1,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "finderOfCopies.h"
+
 
 #include <QCommonStyle>
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <Qthread>
 #include <QDirIterator>
 #include <QCryptographicHash>
 #include <fstream>
 #include <iostream>
 
-
+typedef std::map<QByteArray, QVector<std::pair<QString, int>>>  mapToTree;
 
 
 main_window::main_window(QWidget *parent)
@@ -34,9 +37,12 @@ main_window::main_window(QWidget *parent)
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
 
     connect(ui->pushButton, &QPushButton::clicked, this, &main_window::select_directory);
-    connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::scan_directory);
+    connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::start_search);
     connect(ui->pushButton_3, &QPushButton::clicked, this, &main_window::select_useless);
     connect(ui->pushButton_4, &QPushButton::clicked, this, &main_window::delete_useless);
+
+    //
+    qRegisterMetaType<mapToTree>("mapToTree");
 
 }
 
@@ -53,10 +59,86 @@ void main_window::select_directory() {
     ui->lineEdit->insert(dir);
     ui->pushButton_2->setEnabled(true);
     ui->progressBar->setValue(0);
+    ui->treeWidget->clear();
+}
+
+void main_window::start_search() {
+    ui->progressBar->setValue(0);
+    ui->pushButton_3->setEnabled(false);
+    ui->pushButton_4->setEnabled(false);
+
+    ui->treeWidget->clear();
+    auto *thread = new QThread;
+    auto *worker = new finder(curDir);
+
+    //here is your signals
+    //...
+
+
+    worker->moveToThread(thread);
+
+    connect(thread, SIGNAL(started()), worker, SLOT(process()));
+    connect(worker, SIGNAL(finished()), thread, SLOT(quit()));
+    connect(worker, SIGNAL(addToTree(mapToTree)),
+            this, SLOT(addToTreeUI(mapToTree)));
+    connect(worker, SIGNAL(setProgressBar(long long)), this, SLOT(setProgress(long long)));
+    connect(worker, SIGNAL(finished()), this, SLOT(doFinishThings()));
+
+    time = std::clock();
+    thread->start();
+
 
 }
 
-void main_window::select_useless(){
+void main_window::setProgress(long long MAXS) {
+    ui->progressBar->setMaximum((int)std::abs(MAXS));
+}
+
+void main_window::doFinishThings() {
+    ui->progressBar->maximum();
+    time = std::clock() - time;
+
+    if (ui->treeWidget->topLevelItemCount() == 0) {
+        auto *item = new QTreeWidgetItem(ui->treeWidget);
+        item->setText(0, QString("Not Found Duplicates!)"));
+        ui->pushButton_3->setEnabled(false);
+    } else {
+        auto *item = new QTreeWidgetItem(ui->treeWidget);
+        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
+                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
+        ui->pushButton_3->setEnabled(true);
+
+    }
+}
+
+void main_window::addToTreeUI(std::map<QByteArray, QVector<std::pair<QString, int>>> hashs) {
+    for (auto cur = hashs.begin(); cur != hashs.end(); ++cur) {
+        if (cur->second.size() != 1) {
+            //wasDuplicate = true;
+            auto *item = new QTreeWidgetItem(ui->treeWidget);
+            item->setText(0, QString("Found ") + QString::number(cur->second.size()) + QString(" duplicates"));
+
+            QFileInfo file_info_temp(cur->second[0].first);
+            item->setText(1,
+                          QString::number(file_info_temp.size() * (cur->second.size() - 1)) +
+                          QString(" bytes"));
+            sum += file_info_temp.size() * (cur->second.size() - 1);
+            for (auto child : cur->second) {
+                QTreeWidgetItem *childItem = new QTreeWidgetItem();
+                childItem->setText(0, child.first.mid(curDir.length() + 1, child.first.length() - curDir.length() - 1));
+                item->addChild(childItem);
+            }
+            ui->treeWidget->addTopLevelItem(item);
+        }
+        QFileInfo file_info_temp(cur->second[0].first);
+        sumProgress += cur->second.size() * file_info_temp.size();
+        ui->progressBar->setValue(ui->progressBar->value() + (int)sumProgress);
+        //ui->progressBar->setValue((int) (100 * sumProgress / sumProgressAll));
+    }
+
+}
+
+void main_window::select_useless() {
     for (int i = 0; i < ui->treeWidget->topLevelItemCount(); ++i) {
         auto *top_item = ui->treeWidget->topLevelItem(i);
         for (int j = 1; j < top_item->childCount(); j++) {
@@ -67,7 +149,7 @@ void main_window::select_useless(){
     ui->pushButton_4->setEnabled(true);
 }
 
-void main_window::delete_useless(){
+void main_window::delete_useless() {
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Deleting useless",
                                                               "All files will be deleted forever. \nDo you really want to continue?");
     if (reply == QMessageBox::Yes) {
@@ -80,153 +162,6 @@ void main_window::delete_useless(){
             QFile(paths[i]).remove();
         }
     }
-}
-
-void main_window::find_copies(QVector<std::pair<QString, int>> vec,
-                              std::vector<std::ifstream> &streams, int degree) {
-
-    QCryptographicHash sha(QCryptographicHash::Sha3_256);
-    std::map<QByteArray, QVector<std::pair<QString, int>>> hashs;
-    int gcount = 0;
-    for (std::pair<QString, int> file : vec) {
-
-        sha.reset();
-        std::vector<char> buffer((1ull << degree));
-        streams[file.second].read(buffer.data(), (1 << degree));
-        gcount = static_cast<int>(streams[file.second].gcount());
-        sha.addData(buffer.data(), gcount);
-        QByteArray res = sha.result();
-        std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashs.find(res);
-        if (cur == hashs.end()) {
-            QVector<std::pair<QString, int>> temp;
-            temp.push_back(file);
-            hashs.insert({res, temp});
-        } else {
-            cur->second.push_back(file);
-        }
-
-        if (gcount == 0) {
-            streams[file.second].close();
-        }
-    }
-    if (gcount == 0) {
-        for (auto cur = hashs.begin(); cur != hashs.end(); ++cur) {
-            if (cur->second.size() != 1) {
-                wasDuplicate = true;
-                auto *item = new QTreeWidgetItem(ui->treeWidget);
-                item->setText(0, QString("Found ") + QString::number(cur->second.size()) + QString(" duplicates"));
-
-                QFileInfo file_info_temp(cur->second[0].first);
-                item->setText(1,
-                              QString::number(file_info_temp.size() * (cur->second.size() - 1)) +
-                              QString(" bytes"));
-                sum += file_info_temp.size() * (cur->second.size() - 1);
-                for (auto child : cur->second) {
-                    QTreeWidgetItem *childItem = new QTreeWidgetItem();
-                    childItem->setText(0, child.first.mid(curDir.length() + 1, child.first.length() - curDir.length() - 1));
-                    item->addChild(childItem);
-                }
-                ui->treeWidget->addTopLevelItem(item);
-            }
-            QFileInfo file_info_temp(cur->second[0].first);
-            sumProgress += cur->second.size() * file_info_temp.size();
-            ui->progressBar->setValue((int)(100 * sumProgress / sumProgressAll));
-        }
-    } else {
-        for (auto ivec : hashs) {
-            if (degree < 20) find_copies(ivec.second, streams, degree + 1);
-            else find_copies(ivec.second, streams, degree);
-        }
-    }
-}
-
-void main_window::scan_directory() {
-
-    ui->progressBar->setValue(0);
-    std::clock_t time = std::clock();
-    QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-
-    ui->treeWidget->clear();
-    std::map<qint64, QVector<QString>> files;
-    while (it.hasNext()) {
-        QFileInfo file_info(it.next());
-        qint64 sizeT = file_info.size();
-        if (files.find(sizeT) != files.end()) {
-            files.find(sizeT)->second.push_back(file_info.filePath());
-        } else {
-            QVector<QString> tempi;
-            tempi.push_back(file_info.filePath());
-            files.insert({sizeT, tempi});
-        }
-    }
-
-    for(auto i = files.begin(); i != files.end(); ++i) {
-        sumProgressAll += i->second.size() * i->first;
-    }
-
-    QCryptographicHash sha(QCryptographicHash::Sha3_256);
-    for (auto i = files.begin(); i != files.end(); ++i) {
-        if (i->second.size() != 1) {
-
-            //первая итерация, которая отсечет дофига
-            std::map<QByteArray, QVector<std::pair<QString, int>>> hashsFirstIter;
-            for (auto name: i->second) {
-                sha.reset();
-                QFile file(name);
-                std::ifstream fin(name.toStdString(), std::ios::binary);
-                int gcount = 0;
-                if (fin.is_open()) {
-                    std::array<char, 4> buffer{};
-                    fin.read(buffer.data(), buffer.size());
-                    gcount = static_cast<int>(fin.gcount());
-                    sha.addData(buffer.data(), gcount);
-
-                    QByteArray res = sha.result();
-                    std::map<QByteArray, QVector<std::pair<QString, int>>>::iterator cur = hashsFirstIter.find(res);
-                    if (cur == hashsFirstIter.end()) {
-                        QVector<std::pair<QString, int>> temp;
-                        temp.push_back({name, 0});
-                        hashsFirstIter.insert({res, temp});
-                    } else {
-                        int temp = cur->second.size();
-                        cur->second.push_back({name, temp});
-                    }
-                }
-            }
-            //
-
-            //рекурсивный поиск
-            for (auto vec: hashsFirstIter) {
-
-                std::vector<std::ifstream> streams((unsigned long long)(vec.second.size()));
-                for (auto pair: vec.second) {
-                    std::ifstream fin(pair.first.toStdString(), std::ios::binary);
-                    streams[pair.second] = std::move(fin);
-                }
-                find_copies(vec.second, streams, 0);
-            }
-            //
-        }
-    }
-
-    time = std::clock() - time;
-
-    if (!wasDuplicate) {
-        auto *item = new QTreeWidgetItem(ui->treeWidget);
-        item->setText(0, QString("Not Found Duplicates!)"));
-        ui->pushButton_3->setEnabled(false);
-    } else {
-        auto *item = new QTreeWidgetItem(ui->treeWidget);
-        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
-                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
-        ui->pushButton_3->setEnabled(true);
-
-    }
-    wasDuplicate = false;
-    sum = 0;
-    sumProgressAll = 0;
-    sumProgress = 0;
-    ui->progressBar->setValue(100);
 }
 
 void main_window::show_about_dialog() {

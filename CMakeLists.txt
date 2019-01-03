@@ -19,6 +19,8 @@ add_executable(FileManager
         mainwindow.h
         mainwindow.cpp
         mainwindow.ui
+        finderOfCopies.cpp
+        finderOfCopies.h
         )
 
 target_link_libraries(FileManager Qt5::Core)

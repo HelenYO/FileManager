@@ -27,6 +27,8 @@ main_window::main_window(QWidget *parent)
     ui->pushButton_2->setEnabled(false);
     ui->pushButton_3->setEnabled(false);
     ui->pushButton_4->setEnabled(false);
+    ui->pushButton_4->setEnabled(false);
+    ui->stopButton->setEnabled(false);
     ui->progressBar->setValue(0);
 
     QCommonStyle style;
@@ -40,13 +42,22 @@ main_window::main_window(QWidget *parent)
     connect(ui->pushButton_2, &QPushButton::clicked, this, &main_window::start_search);
     connect(ui->pushButton_3, &QPushButton::clicked, this, &main_window::select_useless);
     connect(ui->pushButton_4, &QPushButton::clicked, this, &main_window::delete_useless);
+    connect(ui->stopButton, &QPushButton::clicked, this, &main_window::interruption);
 
     //
     qRegisterMetaType<mapToTree>("mapToTree");
 
 }
 
+void main_window::interruption() {
+    thread->requestInterruption();
+}
+
 main_window::~main_window() = default;
+
+void main_window::stop() {
+
+}
 
 void main_window::select_directory() {
     QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
@@ -62,13 +73,15 @@ void main_window::select_directory() {
     ui->treeWidget->clear();
 }
 
+
+
 void main_window::start_search() {
     ui->progressBar->setValue(0);
     ui->pushButton_3->setEnabled(false);
     ui->pushButton_4->setEnabled(false);
 
     ui->treeWidget->clear();
-    auto *thread = new QThread;
+    thread = new QThread;
     auto *worker = new finder(curDir);
 
     //here is your signals
@@ -85,6 +98,7 @@ void main_window::start_search() {
     connect(worker, SIGNAL(finished()), this, SLOT(doFinishThings()));
 
     time = std::clock();
+    ui->stopButton->setEnabled(true);
     thread->start();
 
 
@@ -95,6 +109,7 @@ void main_window::setProgress(long long MAXS) {
 }
 
 void main_window::doFinishThings() {
+    ui->stopButton->setEnabled(false);
     ui->progressBar->maximum();
     time = std::clock() - time;
 

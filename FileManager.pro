@@ -26,9 +26,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp
+        finderOfCopies.cpp
 
 HEADERS += \
         mainwindow.h
+        finderOfCopies.h
 
 FORMS += \
         mainwindow.ui

@@ -28,6 +28,8 @@ private slots:
     void addToTreeUI(std::map<QByteArray, QVector<std::pair<QString, int>>> hashs);
     void setProgress(long long MAXS);
     void doFinishThings();
+    void stop();
+    void interruption();
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
@@ -38,6 +40,7 @@ private:
     qint64 sumProgress = 0;
     qint64 sumProgressAll = 0;
     std::clock_t time;
+    QThread* thread = nullptr;
 };
 
 #endif // MAINWINDOW_H

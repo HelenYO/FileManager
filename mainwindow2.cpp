@@ -67,12 +67,10 @@ void subFind::start_find() {
             }
         }
         if(contain) {
-            //std::cout << files[i].file.toStdString() + "\n";
             std::ifstream fin(files[i].file.toStdString(), std::ios::binary);
             std::string text;
             std::string pat = sub;
             int number = 0;
-            //contains.push_back({files[i].file, new vector<});
             std::vector<std::pair<int, int>> thisLine;
 
             while (!fin.eof()) {
@@ -90,7 +88,6 @@ void subFind::start_find() {
                                      std::boyer_moore_searcher(
                                              pat.begin(), pat.end()));
                 }
-                //return ans;
                 if (ans != 0) {
                     thisLine.emplace_back(number, ans);
                 }
@@ -99,9 +96,6 @@ void subFind::start_find() {
             if (thisLine.size() != 0) {
                 contains.push_back({files[i].file, thisLine});
             }
-
-//            auto *item = new QTreeWidgetItem(ui->treeWidget);
-//            item->setText(0, files[i].file);
         }
     }
 
@@ -138,10 +132,34 @@ void subFind::startPreprocessing() {
 void subFind::addTrigrams(QString name, std::set<int> &set) {
     std::ifstream fin(name.toStdString(), std::ios::binary);
     int gcount = -1;
+    uint8_t tr1 = 0;
+    uint8_t tr2 = 0;
     while(gcount != 0) {
         std::vector<char> buffer(BUFFSIZE);
         fin.read(buffer.data(), BUFFSIZE);
         gcount = static_cast<int>(fin.gcount());
+        if(gcount != -1) {
+            int ans1 = 0;
+            ans1 |= tr1;
+            ans1 <<= 8;
+            ans1 |= tr2;
+            ans1 <<= 8;
+            ans1 |= (uint8_t)buffer[0];
+            set.insert(ans1);
+            if(gcount > 1) {
+                int ans2 = 0;
+                ans2 |= tr2;
+                ans2 <<= 8;
+                ans2 |= (uint8_t)buffer[0];
+                ans2 <<= 8;
+                ans2 |= (uint8_t)buffer[1];
+                set.insert(ans2);
+            }
+        }
+        if(gcount == BUFFSIZE) {
+            tr1 = (uint8_t)buffer[BUFFSIZE - 2];
+            tr2 = (uint8_t)buffer[BUFFSIZE - 1];
+        }
         for (int i = 0; i < gcount - 3 + 1; ++i) {
             int ans = 0;
             uint8_t a = (uint8_t)buffer[i];
@@ -155,7 +173,7 @@ void subFind::addTrigrams(QString name, std::set<int> &set) {
             set.insert(ans);
         }
     }
-}// todo:  не работает на границах, я тупо забыла про это
+}
 
 
 

@@ -45,6 +45,8 @@ signals:
 
     void setProgressBar();
 
+    void updateProgressBar();
+
     void addToTree(std::pair<QString, std::vector<std::pair<int, int>>> add);
 
 private:

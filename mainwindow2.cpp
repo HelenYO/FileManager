@@ -17,7 +17,7 @@
 #include <iostream>
 
 
-int BUFFSIZE = 100;
+unsigned long long BUFFSIZE = 100;
 
 typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
@@ -27,6 +27,8 @@ subFind::subFind(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->buttonFind->setEnabled(true);
+    ui->progressBar->setValue(0);
+    ui->label->clear();
     connect(ui->buttonSelectDir, &QPushButton::clicked, this, &subFind::select_directory);
     connect(ui->buttonFind, &QPushButton::clicked, this, &subFind::start_find);
 
@@ -51,8 +53,10 @@ void subFind::select_directory() {
 void subFind::start_find() {
 
     ui->treeWidget->clear();
+    ui->progressBar->setValue(0);
     std::string sub = ui->lineEditSubString->text().toStdString();
 
+    ui->progressBar->setMaximum(files.size());
     thread = new QThread;
     auto *worker = new finderSub(curDir, sub, files);
     worker->moveToThread(thread);
@@ -61,13 +65,30 @@ void subFind::start_find() {
     connect(worker, SIGNAL(finished()), thread, SLOT(quit()));
     connect(worker, SIGNAL(addToTree(myPair)),
             this, SLOT(addToTreeUI(myPair)));
+    connect(worker, SIGNAL(finished()), this, SLOT(doFinishThings()));
+    connect(worker, SIGNAL(updateProgressBar()), this, SLOT(updBar()));
+    time = std::clock();
     thread->start();
+}
+
+void subFind::updBar() {
+    ui->progressBar->setValue(ui->progressBar->value() + 1);
+}
+
+void subFind::doFinishThings() {
+    ui->progressBar->maximum();
+    time = std::clock() - time;
+    if (ui->treeWidget->topLevelItemCount() == 0) {
+        auto *item = new QTreeWidgetItem(ui->treeWidget);
+        item->setText(0, QString("Not Found Substring"));
+    }
+    ui->label->clear();
+    ui->label->setText(QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
 }
 
 void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add) {
 
         auto *item = new QTreeWidgetItem(ui->treeWidget);
-        //QString temp = QString::mid(contains[i].first);
         QString temp = add.first.mid(curDir.length() + 1,add.first.length() - curDir.length());
         temp +=  "    founded: ";
         for (int j = 0; j < add.second.size(); j++) {
@@ -86,12 +107,15 @@ void subFind::startPreprocessing() {
     _filters << "*.txt" << "*.text" << "*.tex" << "*.ttf" << "*.sub" << "*.pwi" << "*.log" << "*.err" << "*.apt";
     QDirIterator it(curDir, _filters, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
     files = *(new std::vector<fileTrigram>());
+    //int kolvo = 0;
     while (it.hasNext()) {
+        //++kolvo;
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
         files.emplace_back(name);
         addTrigrams(name, files[files.size() - 1].trigrams);
     }
+    //ui->progressBar->setMaximum(kolvo);
 }
 
 void subFind::addTrigrams(QString name, std::set<int> &set) {
@@ -101,7 +125,7 @@ void subFind::addTrigrams(QString name, std::set<int> &set) {
     uint8_t tr2 = 0;
     while(gcount != 0) {
         std::vector<char> buffer(BUFFSIZE);
-        fin.read(buffer.data(), BUFFSIZE);
+        fin.read(buffer.data(), (int)BUFFSIZE);
         gcount = static_cast<int>(fin.gcount());
         if(gcount != -1) {
             int ans1 = 0;

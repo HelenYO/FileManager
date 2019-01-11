@@ -26,19 +26,22 @@ void finderSub::process() {
 
 void finderSub::scan_directory() {
     std::vector<int> subTrig;
-    for (int i = 0; i < sub.size() - 3 + 1; ++i) {
-        int trig = 0;
-        uint8_t a = (uint8_t)sub[i];
-        trig |= a;
-        trig <<= 8;
-        a = (uint8_t)sub[i + 1];
-        trig |= a;
-        trig <<= 8;
-        a = (uint8_t)sub[i + 2];
-        trig |= a;
+    //std::cout << sub.size() << " ";
+    if (sub.size() > 2 ) {
+        for (int i = 0; i < sub.size() - 3 + 1; ++i) {
+            int trig = 0;
+            uint8_t a = (uint8_t) sub[i];
+            trig |= a;
+            trig <<= 8;
+            a = (uint8_t) sub[i + 1];
+            trig |= a;
+            trig <<= 8;
+            a = (uint8_t) sub[i + 2];
+            trig |= a;
 
-        std::cout << trig << " ";
-        subTrig.push_back(trig);
+            std::cout << trig << " ";
+            subTrig.push_back(trig);
+        }
     }
 
     //contains = *(new std::vector<std::pair<QString, std::vector<std::pair<int, int>>>>());
@@ -83,6 +86,7 @@ void finderSub::scan_directory() {
                 emit addToTree({files[i].file, thisLine});
             }
         }
+        emit updateProgressBar();
     }
 
 

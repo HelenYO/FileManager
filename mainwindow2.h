@@ -19,6 +19,8 @@ public:
 private slots:
 
     void addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add);
+    void doFinishThings();
+    void updBar();
 
 private:
     void select_directory();
@@ -32,6 +34,7 @@ private:
     std::vector<fileTrigram> files;
     //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
     QThread* thread = nullptr;
+    std::clock_t time;
 };
 
 #endif // MAINWINDOW2_H

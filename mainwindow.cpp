@@ -30,6 +30,7 @@ main_window::main_window(QWidget *parent)
     ui->pushButton_4->setEnabled(false);
     ui->stopButton->setEnabled(false);
     ui->progressBar->setValue(0);
+    ui->label->clear();
 
     QCommonStyle style;
 
@@ -118,10 +119,14 @@ void main_window::doFinishThings() {
         item->setText(0, QString("Not Found Duplicates!)"));
         ui->pushButton_3->setEnabled(false);
     } else {
-        auto *item = new QTreeWidgetItem(ui->treeWidget);
-        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
-                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
+//        auto *item = new QTreeWidgetItem(ui->treeWidget);
+//        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
+//                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
         ui->pushButton_3->setEnabled(true);
+
+        ui->label->clear();
+        ui->label->setText(QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
+                           QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
 
     }
 }
@@ -154,10 +159,11 @@ void main_window::addToTreeUI(std::map<QByteArray, QVector<std::pair<QString, in
 }
 
 void main_window::select_useless() {
-    for (int i = 0; i < ui->treeWidget->topLevelItemCount(); ++i) {
-        auto *top_item = ui->treeWidget->topLevelItem(i);
+    auto root = ui->treeWidget->invisibleRootItem();
+    for (int i = 0; i < root->childCount(); ++i) {
+        auto* top_item = root->child(i);
         for (int j = 1; j < top_item->childCount(); j++) {
-            auto *child_item = top_item->child(j);
+            auto child_item = top_item->child(j);
             child_item->setSelected(true);
         }
     }

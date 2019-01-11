@@ -1,4 +1,5 @@
 #include "finderOfCopies.h"
+#include <array>
 
 struct cancellation_exception : std::exception {
     const char *what() const noexcept override {

@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
-
+CONFIG += c++11
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = FileManager
@@ -25,13 +25,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
-        finderOfCopies.cpp
+        mainwindow.cpp \
+        finderOfCopies.cpp \
+    mainwindow2.cpp
 
 HEADERS += \
-        mainwindow.h
-        finderOfCopies.h
+        mainwindow.h \
+        finderOfCopies.h \
+    mainwindow2.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    MainWindow1.ui
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project(FileManager)
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -gdwarf-3")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -gdwarf-3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 set(CMAKE_PREFIX_PATH "/Users/elena/Qt/5.11.2/clang_64/lib/cmake")
 set(CMAKE_AUTOMOC ON)
@@ -21,7 +21,10 @@ add_executable(FileManager
         mainwindow.ui
         finderOfCopies.cpp
         finderOfCopies.h
-        )
+        mainwindow2.cpp
+        mainwindow2.h
+        mainwindow1.ui
+        fileTrigram.cpp fileTrigram.h)
 
 target_link_libraries(FileManager Qt5::Core)
 target_link_libraries(FileManager Qt5::Widgets)

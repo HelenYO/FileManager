@@ -119,9 +119,6 @@ void main_window::doFinishThings() {
         item->setText(0, QString("Not Found Duplicates!)"));
         ui->pushButton_3->setEnabled(false);
     } else {
-//        auto *item = new QTreeWidgetItem(ui->treeWidget);
-//        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
-//                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
         ui->pushButton_3->setEnabled(true);
 
         ui->label->clear();

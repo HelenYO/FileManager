@@ -24,7 +24,7 @@ add_executable(FileManager
         mainwindow2.cpp
         mainwindow2.h
         mainwindow1.ui
-        fileTrigram.cpp fileTrigram.h)
+        fileTrigram.cpp fileTrigram.h finderOfStrings.cpp finderOfStrings.h)
 
 target_link_libraries(FileManager Qt5::Core)
 target_link_libraries(FileManager Qt5::Widgets)

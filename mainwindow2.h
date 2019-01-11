@@ -16,6 +16,10 @@ public:
     explicit subFind(QWidget *parent = nullptr);
     ~subFind() override;
 
+private slots:
+
+    void addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add);
+
 private:
     void select_directory();
     void startPreprocessing();
@@ -26,8 +30,8 @@ private:
     std::unique_ptr<Ui::MainWindow1> ui;
     QString curDir;
     std::vector<fileTrigram> files;
-    std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
-
+    //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
+    QThread* thread = nullptr;
 };
 
 #endif // MAINWINDOW2_H

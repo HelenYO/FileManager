@@ -1,13 +1,25 @@
 #include "mainwindow2.h"
 #include "ui_MainWindow1.h"
+#include "finderOfStrings.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
 #include <fstream>
 #include <iostream>
+#include <QCommonStyle>
+#include <QDesktopWidget>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <Qthread>
+#include <QDirIterator>
+#include <QCryptographicHash>
+#include <fstream>
+#include <iostream>
 
 
 int BUFFSIZE = 100;
+
+typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
 subFind::subFind(QWidget *parent) :
     QMainWindow(parent),
@@ -19,6 +31,7 @@ subFind::subFind(QWidget *parent) :
     connect(ui->buttonFind, &QPushButton::clicked, this, &subFind::start_find);
 
 
+    qRegisterMetaType<myPair>("myPair");
 
 }
 
@@ -40,80 +53,32 @@ void subFind::start_find() {
     ui->treeWidget->clear();
     std::string sub = ui->lineEditSubString->text().toStdString();
 
-    std::vector<int> subTrig;
-    for (int i = 0; i < sub.size() - 3 + 1; ++i) {
-        int trig = 0;
-        uint8_t a = (uint8_t)sub[i];
-        trig |= a;
-        trig <<= 8;
-        a = (uint8_t)sub[i + 1];
-        trig |= a;
-        trig <<= 8;
-        a = (uint8_t)sub[i + 2];
-        trig |= a;
+    thread = new QThread;
+    auto *worker = new finderSub(curDir, sub, files);
+    worker->moveToThread(thread);
 
-        std::cout << trig << " ";
-        subTrig.push_back(trig);
-    }
+    connect(thread, SIGNAL(started()), worker, SLOT(process()));
+    connect(worker, SIGNAL(finished()), thread, SLOT(quit()));
+    connect(worker, SIGNAL(addToTree(myPair)),
+            this, SLOT(addToTreeUI(myPair)));
+    thread->start();
+}
 
-    contains = *(new std::vector<std::pair<QString, std::vector<std::pair<int, int>>>>());
+void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add) {
 
-    for(int i = 0; i < files.size(); ++i) {
-        bool contain = true;
-        for (int j = 0; j < subTrig.size(); ++j) {
-            if (files[i].trigrams.end() == files[i].trigrams.find(subTrig[j])) {
-                contain = false;
-                break;
-            }
-        }
-        if(contain) {
-            std::ifstream fin(files[i].file.toStdString(), std::ios::binary);
-            std::string text;
-            std::string pat = sub;
-            int number = 0;
-            std::vector<std::pair<int, int>> thisLine;
-
-            while (!fin.eof()) {
-                number++;//todo: я пока храню номер строки и склько в ней вхождений, я пушу в вектор строку, если в ней вхождений  нет- попаю
-                std::getline(fin, text);
-
-                int ans = 0;
-                auto it = std::search(text.begin(), text.end(),
-                                      std::boyer_moore_searcher(
-                                              pat.begin(), pat.end()));
-                while (it != text.end()) {
-                    ans++;
-
-                    it = std::search(it + 1, text.end(),
-                                     std::boyer_moore_searcher(
-                                             pat.begin(), pat.end()));
-                }
-                if (ans != 0) {
-                    thisLine.emplace_back(number, ans);
-                }
-            }
-
-            if (thisLine.size() != 0) {
-                contains.push_back({files[i].file, thisLine});
-            }
-        }
-    }
-
-    for (int i = 0; i < contains.size(); ++i) {
         auto *item = new QTreeWidgetItem(ui->treeWidget);
         //QString temp = QString::mid(contains[i].first);
-        QString temp =contains[i].first.mid(curDir.length() + 1,contains[i].first.length() - curDir.length());
+        QString temp = add.first.mid(curDir.length() + 1,add.first.length() - curDir.length());
         temp +=  "    founded: ";
-        for (int j = 0; j < contains[i].second.size(); j++) {
+        for (int j = 0; j < add.second.size(); j++) {
             temp += "\n          ";
             temp += "in ";
-            temp += QString::number(contains[i].second[j].first);
+            temp += QString::number(add.second[j].first);
             temp += " line ";
-            temp += QString::number(contains[i].second[j].second) + " times";
+            temp += QString::number(add.second[j].second) + " times";
         }
 
         item->setText(0, temp);
-    }
 }
 
 void subFind::startPreprocessing() {

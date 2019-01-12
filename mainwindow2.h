@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <memory>
+#include <QFileSystemWatcher>
 #include "fileTrigram.h"
 
 namespace Ui {
@@ -21,12 +22,14 @@ private slots:
     void addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add);
     void doFinishThings();
     void updBar();
+    void changed(QString path);
 
 private:
     void select_directory();
     void startPreprocessing();
     void addTrigrams(QString name, std::set<int> &set);
     void start_find();
+    void interruption();
 
 private:
     std::unique_ptr<Ui::MainWindow1> ui;
@@ -35,6 +38,7 @@ private:
     //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
     QThread* thread = nullptr;
     std::clock_t time;
+    QFileSystemWatcher *fsWatcher;
 };
 
 #endif // MAINWINDOW2_H

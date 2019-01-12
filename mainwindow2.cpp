@@ -31,13 +31,22 @@ subFind::subFind(QWidget *parent) :
     ui->label->clear();
     connect(ui->buttonSelectDir, &QPushButton::clicked, this, &subFind::select_directory);
     connect(ui->buttonFind, &QPushButton::clicked, this, &subFind::start_find);
+    connect(ui->buttonStop, &QPushButton::clicked, this, &subFind::interruption);
 
 
     qRegisterMetaType<myPair>("myPair");
+    fsWatcher = new QFileSystemWatcher(this);
+    connect(fsWatcher, SIGNAL(fileChanged(QString)), this, SLOT(changed(QString)));
 
 }
 
 subFind::~subFind() = default;
+
+void subFind::changed(QString path) {
+    //ui->statusbar->showMessage(path + " has changed");
+    ui->label->clear();
+    ui->label->setText(path + " was changed");
+}
 
 void subFind::select_directory() {
     QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
@@ -46,14 +55,22 @@ void subFind::select_directory() {
 
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
+    //fsWatcher->addPath(curDir);
 
     startPreprocessing();
+}
+
+void subFind::interruption() {
+    thread->requestInterruption();
+    ui->label->setText("Stopped");
+    ui->buttonStop->setEnabled(false);
 }
 
 void subFind::start_find() {
 
     ui->treeWidget->clear();
     ui->progressBar->setValue(0);
+    ui->buttonStop->setEnabled(true);
     std::string sub = ui->lineEditSubString->text().toStdString();
 
     ui->progressBar->setMaximum(files.size());
@@ -110,10 +127,12 @@ void subFind::startPreprocessing() {
     //int kolvo = 0;
     while (it.hasNext()) {
         //++kolvo;
+
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
         files.emplace_back(name);
         addTrigrams(name, files[files.size() - 1].trigrams);
+        fsWatcher->addPath(name);
     }
     //ui->progressBar->setMaximum(kolvo);
 }

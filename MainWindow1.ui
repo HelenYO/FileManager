@@ -53,6 +53,13 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="buttonStop">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -84,7 +91,7 @@
     <item>
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>TextLabel</string>
+       <string>Start</string>
       </property>
      </widget>
     </item>

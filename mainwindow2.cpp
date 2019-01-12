@@ -1,5 +1,5 @@
 #include "mainwindow2.h"
-#include "ui_MainWindow1.h"
+#include "ui_mainwindow1.h"
 #include "finderOfStrings.h"
 
 #include <QDirIterator>
@@ -10,7 +10,7 @@
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <Qthread>
+//#include <QThread>
 #include <QDirIterator>
 #include <QCryptographicHash>
 #include <fstream>
@@ -23,7 +23,7 @@ typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
 subFind::subFind(QWidget *parent) :
         QMainWindow(parent),
-        ui(new Ui::MainWindow1) {
+        ui(new Ui::mainwindow1) {
     ui->setupUi(this);
     ui->buttonFind->setEnabled(true);
     ui->buttonStop->setEnabled(false);
@@ -68,13 +68,22 @@ void subFind::select_directory() {
 }
 
 void subFind::interruption() {
-    thread->requestInterruption();
-    ui->label->setText("Stopped");
-    ui->buttonStop->setEnabled(false);
+    if(thread) {
+        thread->requestInterruption();
+        ui->label->setText("Stopped");
+        ui->buttonStop->setEnabled(false);
+    }
+}
+
+void subFind::interruptionStart() {
+    if(thread) {
+        thread->requestInterruption();
+    }
 }
 
 void subFind::start_find() {
 
+    interruptionStart();
     ui->treeWidget->clear();
     ui->progressBar->setValue(0);
     ui->buttonStop->setEnabled(true);
@@ -129,17 +138,39 @@ void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> a
 }
 
 void subFind::startPreprocessing() {
-    QStringList _filters;
-    _filters << "*.txt" << "*.text" << "*.tex" << "*.ttf" << "*.sub" << "*.pwi" << "*.log" << "*.err" << "*.apt";
-    QDirIterator it(curDir, _filters, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
+    QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
     files = *(new std::vector<fileTrigram>());
     while (it.hasNext()) {
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
-        files.emplace_back(name);
-        addTrigrams(name, files[files.size() - 1].trigrams);
-        fsWatcher->addPath(name);
+        if(check(name) ) {
+            files.emplace_back(name);
+            addTrigrams(name, files[files.size() - 1].trigrams);
+            fsWatcher->addPath(name);
+        }
     }
+}
+
+bool subFind::check(QString name) {
+    std::ifstream fin(name.toStdString(), std::ios::binary);
+    QString sub = name.mid(name.length() - 3, 3);
+    //std::cout << sub.toStdString();
+    if ((sub == "txt") || (sub == "tex") || (sub == "log")) {
+        return true;
+    }
+//    if ((sub == "mp3") || (sub == "jpg") || (sub == "zip") || (sub == "rar") || (sub == ".7z") || (sub == "dmg") || (sub == "jar") || (sub == "png")) {
+//        return false;
+//    }
+    std::vector<char> buffer(BUFFSIZE * 100);
+    fin.read(buffer.data(), (int) BUFFSIZE * 100);
+    for (int i = 0 ; i < fin.gcount(); i++) {
+        if (buffer[i] !=  '\0') {
+
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 void subFind::addTrigrams(QString name, std::set<int> &set) {

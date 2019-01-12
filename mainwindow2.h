@@ -7,7 +7,7 @@
 #include "fileTrigram.h"
 
 namespace Ui {
-    class MainWindow1;
+    class mainwindow1;
 }
 
 class subFind : public QMainWindow {
@@ -30,9 +30,11 @@ private:
     void addTrigrams(QString name, std::set<int> &set);
     void start_find();
     void interruption();
+    void interruptionStart();
+    bool check(QString name);
 
 private:
-    std::unique_ptr<Ui::MainWindow1> ui;
+    std::unique_ptr<Ui::mainwindow1> ui;
     QString curDir;
     std::vector<fileTrigram> files;
     //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;

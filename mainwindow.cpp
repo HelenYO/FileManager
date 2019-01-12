@@ -50,6 +50,7 @@ main_window::main_window(QWidget *parent)
 }
 
 void main_window::interruption() {
+
     thread->requestInterruption();
 }
 

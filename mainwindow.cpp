@@ -7,7 +7,7 @@
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <Qthread>
+#include <QThread>
 #include <QDirIterator>
 #include <QCryptographicHash>
 #include <fstream>

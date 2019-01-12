@@ -45,7 +45,6 @@ main_window::main_window(QWidget *parent)
     connect(ui->pushButton_4, &QPushButton::clicked, this, &main_window::delete_useless);
     connect(ui->stopButton, &QPushButton::clicked, this, &main_window::interruption);
 
-    //
     qRegisterMetaType<mapToTree>("mapToTree");
 
 }

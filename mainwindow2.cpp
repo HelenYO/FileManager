@@ -22,9 +22,8 @@ unsigned long long BUFFSIZE = 100;
 typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
 subFind::subFind(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow1)
-{
+        QMainWindow(parent),
+        ui(new Ui::MainWindow1) {
     ui->setupUi(this);
     ui->buttonFind->setEnabled(true);
     ui->progressBar->setValue(0);
@@ -43,11 +42,10 @@ subFind::subFind(QWidget *parent) :
 subFind::~subFind() = default;
 
 void subFind::changed(QString path) {
-    //ui->statusbar->showMessage(path + " has changed");
     ui->label->clear();
     ui->label->setText(path + " was changed");
     int index = 0;
-    for(int i = 0; i < files.size(); i++) {
+    for (int i = 0; i < files.size(); i++) {
         if (files[i].file == path) {
             index = i;
             break;
@@ -114,18 +112,21 @@ void subFind::doFinishThings() {
 
 void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add) {
 
-        auto *item = new QTreeWidgetItem(ui->treeWidget);
-        QString temp = add.first.mid(curDir.length() + 1,add.first.length() - curDir.length());
-        temp +=  "    founded: ";
-        for (int j = 0; j < add.second.size(); j++) {
-            temp += "\n          ";
-            temp += "in ";
-            temp += QString::number(add.second[j].first);
-            temp += " line ";
-            temp += QString::number(add.second[j].second) + " times";
-        }
+    auto *item = new QTreeWidgetItem(ui->treeWidget);
+    QString temp = add.first.mid(curDir.length() + 1, add.first.length() - curDir.length());
+    temp += "    founded: ";
+    item->setText(0, temp);
+    for (int j = 0; j < add.second.size(); j++) {
+        auto *itemchild = new QTreeWidgetItem(item);
+        QString tempi = "";
+        tempi += "in ";
+        tempi += QString::number(add.second[j].first);
+        tempi += " line ";
+        tempi += QString::number(add.second[j].second) + " times";
+        itemchild->setText(0, tempi);
+    }
 
-        item->setText(0, temp);
+
 }
 
 void subFind::startPreprocessing() {
@@ -151,41 +152,41 @@ void subFind::addTrigrams(QString name, std::set<int> &set) {
     int gcount = -1;
     uint8_t tr1 = 0;
     uint8_t tr2 = 0;
-    while(gcount != 0) {
+    while (gcount != 0) {
         std::vector<char> buffer(BUFFSIZE);
-        fin.read(buffer.data(), (int)BUFFSIZE);
+        fin.read(buffer.data(), (int) BUFFSIZE);
         gcount = static_cast<int>(fin.gcount());
-        if(gcount != -1) {
+        if (gcount != -1) {
             int ans1 = 0;
             ans1 |= tr1;
             ans1 <<= 8;
             ans1 |= tr2;
             ans1 <<= 8;
-            ans1 |= (uint8_t)buffer[0];
+            ans1 |= (uint8_t) buffer[0];
             set.insert(ans1);
-            if(gcount > 1) {
+            if (gcount > 1) {
                 int ans2 = 0;
                 ans2 |= tr2;
                 ans2 <<= 8;
-                ans2 |= (uint8_t)buffer[0];
+                ans2 |= (uint8_t) buffer[0];
                 ans2 <<= 8;
-                ans2 |= (uint8_t)buffer[1];
+                ans2 |= (uint8_t) buffer[1];
                 set.insert(ans2);
             }
         }
-        if(gcount == BUFFSIZE) {
-            tr1 = (uint8_t)buffer[BUFFSIZE - 2];
-            tr2 = (uint8_t)buffer[BUFFSIZE - 1];
+        if (gcount == BUFFSIZE) {
+            tr1 = (uint8_t) buffer[BUFFSIZE - 2];
+            tr2 = (uint8_t) buffer[BUFFSIZE - 1];
         }
         for (int i = 0; i < gcount - 3 + 1; ++i) {
             int ans = 0;
-            uint8_t a = (uint8_t)buffer[i];
+            uint8_t a = (uint8_t) buffer[i];
             ans |= a;
             ans <<= 8;
-            a = (uint8_t)buffer[i + 1];
+            a = (uint8_t) buffer[i + 1];
             ans |= a;
             ans <<= 8;
-            a = (uint8_t)buffer[i + 2];
+            a = (uint8_t) buffer[i + 2];
             ans |= a;
             set.insert(ans);
         }

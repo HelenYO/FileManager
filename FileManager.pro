@@ -36,5 +36,5 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui \
-    MainWindow1.ui
+    mainwindow1.ui
 

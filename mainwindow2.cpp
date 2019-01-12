@@ -26,6 +26,7 @@ subFind::subFind(QWidget *parent) :
         ui(new Ui::MainWindow1) {
     ui->setupUi(this);
     ui->buttonFind->setEnabled(true);
+    ui->buttonStop->setEnabled(false);
     ui->progressBar->setValue(0);
     ui->label->clear();
     connect(ui->buttonSelectDir, &QPushButton::clicked, this, &subFind::select_directory);
@@ -62,7 +63,6 @@ void subFind::select_directory() {
 
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
-    //fsWatcher->addPath(curDir);
 
     startPreprocessing();
 }
@@ -108,6 +108,7 @@ void subFind::doFinishThings() {
     }
     ui->label->clear();
     ui->label->setText(QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
+    ui->buttonStop->setEnabled(false);
 }
 
 void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add) {
@@ -125,8 +126,6 @@ void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> a
         tempi += QString::number(add.second[j].second) + " times";
         itemchild->setText(0, tempi);
     }
-
-
 }
 
 void subFind::startPreprocessing() {
@@ -134,17 +133,13 @@ void subFind::startPreprocessing() {
     _filters << "*.txt" << "*.text" << "*.tex" << "*.ttf" << "*.sub" << "*.pwi" << "*.log" << "*.err" << "*.apt";
     QDirIterator it(curDir, _filters, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
     files = *(new std::vector<fileTrigram>());
-    //int kolvo = 0;
     while (it.hasNext()) {
-        //++kolvo;
-
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
         files.emplace_back(name);
         addTrigrams(name, files[files.size() - 1].trigrams);
         fsWatcher->addPath(name);
     }
-    //ui->progressBar->setMaximum(kolvo);
 }
 
 void subFind::addTrigrams(QString name, std::set<int> &set) {

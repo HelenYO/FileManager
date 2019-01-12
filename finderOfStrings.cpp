@@ -34,7 +34,6 @@ void finderSub::scan_directory() {
         };
 
         std::vector<int> subTrig;
-        //std::cout << sub.size() << " ";
         if (sub.size() > 2) {
             for (int i = 0; i < sub.size() - 3 + 1; ++i) {
                 cancellation_point();
@@ -48,7 +47,6 @@ void finderSub::scan_directory() {
                 a = (uint8_t) sub[i + 2];
                 trig |= a;
 
-                std::cout << trig << " ";
                 subTrig.push_back(trig);
             }
         }
@@ -74,7 +72,7 @@ void finderSub::scan_directory() {
 
                 while (!fin.eof()) {
                     cancellation_point();
-                    number++;//todo: я пока храню номер строки и склько в ней вхождений, я пушу в вектор строку, если в ней вхождений  нет- попаю
+                    number++;
                     std::getline(fin, text);
 
                     int ans = 0;

@@ -46,6 +46,15 @@ void subFind::changed(QString path) {
     //ui->statusbar->showMessage(path + " has changed");
     ui->label->clear();
     ui->label->setText(path + " was changed");
+    int index = 0;
+    for(int i = 0; i < files.size(); i++) {
+        if (files[i].file == path) {
+            index = i;
+            break;
+        }
+    }
+    files[index].trigrams = *new std::set<int>();
+    addTrigrams(path, files[index].trigrams);
 }
 
 void subFind::select_directory() {

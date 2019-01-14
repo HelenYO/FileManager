@@ -1,6 +1,7 @@
 #include "mainwindow2.h"
 #include "ui_mainwindow1.h"
 #include "finderOfStrings.h"
+#include "trigram_process.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
@@ -16,8 +17,6 @@
 #include <fstream>
 #include <iostream>
 
-
-unsigned long long BUFFSIZE = 100;
 
 typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
@@ -54,7 +53,7 @@ void subFind::changed(QString path) {
     }
     //files[index].trigrams = *new std::set<int>();
     files[index].trigrams.clear();
-    addTrigrams(path, files[index].trigrams);
+    //addTrigrams(path, files[index].trigrams);//todo:make changes
 }
 
 void subFind::select_directory() {
@@ -65,7 +64,35 @@ void subFind::select_directory() {
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
 
-    startPreprocessing();
+    //startPreprocessing();
+    startPreprocess();
+}
+
+void subFind::startPreprocess() {
+    files.clear();
+    ui->buttonFind->setEnabled(false);
+    ui->label->clear();
+    ui->label->setText("Preprocessing");
+    threadTrig = new QThread;
+    auto *worker = new finderTrig(curDir);
+    worker->moveToThread(threadTrig);
+
+    connect(threadTrig, SIGNAL(started()), worker, SLOT(process()));
+    connect(worker, SIGNAL(finished()), threadTrig, SLOT(quit()));
+    connect(worker, SIGNAL(addFileTrigrams(fileTrigram)), this, SLOT(addFileTrigramsToFiles(fileTrigram)));
+    connect(worker, SIGNAL(finished()), this, SLOT(finishThings()));
+
+    threadTrig->start();
+}
+
+void subFind::finishThings() {
+    ui->buttonFind->setEnabled(true);
+    ui->label->clear();
+    ui->label->setText("Preprocessing is finished");
+}
+
+void subFind::addFileTrigramsToFiles(fileTrigram add) {
+    files.push_back(add);
 }
 
 void subFind::interruption() {
@@ -137,89 +164,3 @@ void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> a
         itemchild->setText(0, tempi);
     }
 }
-
-void subFind::startPreprocessing() {
-    QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-    files.clear();
-    while (it.hasNext()) {
-        QFileInfo file_info(it.next());
-        QString name = file_info.absoluteFilePath();
-        if(check(name) ) {
-            files.emplace_back(name);
-            addTrigrams(name, files[files.size() - 1].trigrams);
-            fsWatcher->addPath(name);
-        }
-    }
-}
-
-bool subFind::check(QString name) {
-    std::ifstream fin(name.toStdString(), std::ios::binary);
-//    QString sub = name.mid(name.length() - 3, 3);
-//    if ((sub == "txt") || (sub == "tex") || (sub == "log")) {
-//        return true;
-//    }
-//    if ((sub == "mp3") || (sub == "jpg") || (sub == "zip") || (sub == "rar") || (sub == ".7z") || (sub == "dmg") || (sub == "jar") || (sub == "png")) {
-//        return false;
-//    }
-    std::vector<char> buffer(BUFFSIZE * 100);
-    fin.read(buffer.data(), (int) BUFFSIZE * 100);
-    for (int i = 0 ; i < fin.gcount(); i++) {
-        if (buffer[i] !=  '\0') {
-
-        } else {
-            return false;
-        }
-    }
-    return true;
-}
-
-int makeTrig(char a, char b, char c) {
-    int ans = 0;
-    ans |= (uint8_t)a;
-    ans <<= 8;
-    ans |= (uint8_t)b;
-    ans <<= 8;
-    ans |= (uint8_t)c;
-    return ans;
-}
-
-void subFind::addTrigrams(QString const name, std::unordered_set<int> &set) {
-    std::ifstream fin(name.toStdString(), std::ios::binary);
-    int gcount = -1;
-    char tr1 = '\0';
-    char tr2 = '\0';
-    while (gcount != 0) {
-        std::vector<char> buffer(BUFFSIZE);
-        fin.read(buffer.data(), (int) BUFFSIZE);
-        gcount = static_cast<int>(fin.gcount());
-        if (gcount != -1) {
-            int ans1 = makeTrig(tr1, tr2, buffer[0]);
-            set.insert(ans1);
-            if (gcount > 1) {
-                int ans2 = makeTrig(tr2, buffer[0], buffer[1]);
-                set.insert(ans2);
-            }
-        }
-        if (gcount == BUFFSIZE) {
-            tr1 = buffer[BUFFSIZE - 2];
-            tr2 = buffer[BUFFSIZE - 1];
-        }
-        for (int i = 0; i < gcount - 3 + 1; ++i) {
-            int ans = makeTrig(buffer[i], buffer[i + 1], buffer[i + 2]);
-            set.insert(ans);
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-

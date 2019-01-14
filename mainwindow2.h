@@ -23,15 +23,17 @@ private slots:
     void doFinishThings();
     void updBar();
     void changed(QString path);
+    void addFileTrigramsToFiles(fileTrigram add);
+    void finishThings();
 
 private:
     void select_directory();
-    void startPreprocessing();
-    void addTrigrams(QString name, std::unordered_set<int> &set);
+    void startPreprocess();
+    //void addTrigrams(QString name, std::unordered_set<int> &set);
     void start_find();
     void interruption();
     void interruptionStart();
-    bool check(QString name);
+    //bool check(QString name);
 
 private:
     std::unique_ptr<Ui::mainwindow1> ui;
@@ -39,6 +41,7 @@ private:
     std::vector<fileTrigram> files;
     //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
     QThread* thread = nullptr;
+    QThread* threadTrig = nullptr;
     std::clock_t time;
     QFileSystemWatcher *fsWatcher;
 };

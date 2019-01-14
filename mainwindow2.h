@@ -27,7 +27,7 @@ private slots:
 private:
     void select_directory();
     void startPreprocessing();
-    void addTrigrams(QString name, std::set<int> &set);
+    void addTrigrams(QString name, std::unordered_set<int> &set);
     void start_find();
     void interruption();
     void interruptionStart();

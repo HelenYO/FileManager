@@ -27,12 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
         finderOfCopies.cpp \
-    mainwindow2.cpp
+    mainwindow2.cpp \
+    trigram_process.cpp
 
 HEADERS += \
         mainwindow.h \
         finderOfCopies.h \
-    mainwindow2.h
+    mainwindow2.h \
+    trigram_process.h
 
 FORMS += \
         mainwindow.ui \

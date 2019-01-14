@@ -52,7 +52,8 @@ void subFind::changed(QString path) {
             break;
         }
     }
-    files[index].trigrams = *new std::set<int>();
+    //files[index].trigrams = *new std::set<int>();
+    files[index].trigrams.clear();
     addTrigrams(path, files[index].trigrams);
 }
 
@@ -139,7 +140,7 @@ void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> a
 
 void subFind::startPreprocessing() {
     QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-    files = *(new std::vector<fileTrigram>());
+    files.clear();
     while (it.hasNext()) {
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
@@ -153,11 +154,10 @@ void subFind::startPreprocessing() {
 
 bool subFind::check(QString name) {
     std::ifstream fin(name.toStdString(), std::ios::binary);
-    QString sub = name.mid(name.length() - 3, 3);
-    //std::cout << sub.toStdString();
-    if ((sub == "txt") || (sub == "tex") || (sub == "log")) {
-        return true;
-    }
+//    QString sub = name.mid(name.length() - 3, 3);
+//    if ((sub == "txt") || (sub == "tex") || (sub == "log")) {
+//        return true;
+//    }
 //    if ((sub == "mp3") || (sub == "jpg") || (sub == "zip") || (sub == "rar") || (sub == ".7z") || (sub == "dmg") || (sub == "jar") || (sub == "png")) {
 //        return false;
 //    }
@@ -173,47 +173,39 @@ bool subFind::check(QString name) {
     return true;
 }
 
-void subFind::addTrigrams(QString name, std::set<int> &set) {
+int makeTrig(char a, char b, char c) {
+    int ans = 0;
+    ans |= (uint8_t)a;
+    ans <<= 8;
+    ans |= (uint8_t)b;
+    ans <<= 8;
+    ans |= (uint8_t)c;
+    return ans;
+}
+
+void subFind::addTrigrams(QString const name, std::unordered_set<int> &set) {
     std::ifstream fin(name.toStdString(), std::ios::binary);
     int gcount = -1;
-    uint8_t tr1 = 0;
-    uint8_t tr2 = 0;
+    char tr1 = '\0';
+    char tr2 = '\0';
     while (gcount != 0) {
         std::vector<char> buffer(BUFFSIZE);
         fin.read(buffer.data(), (int) BUFFSIZE);
         gcount = static_cast<int>(fin.gcount());
         if (gcount != -1) {
-            int ans1 = 0;
-            ans1 |= tr1;
-            ans1 <<= 8;
-            ans1 |= tr2;
-            ans1 <<= 8;
-            ans1 |= (uint8_t) buffer[0];
+            int ans1 = makeTrig(tr1, tr2, buffer[0]);
             set.insert(ans1);
             if (gcount > 1) {
-                int ans2 = 0;
-                ans2 |= tr2;
-                ans2 <<= 8;
-                ans2 |= (uint8_t) buffer[0];
-                ans2 <<= 8;
-                ans2 |= (uint8_t) buffer[1];
+                int ans2 = makeTrig(tr2, buffer[0], buffer[1]);
                 set.insert(ans2);
             }
         }
         if (gcount == BUFFSIZE) {
-            tr1 = (uint8_t) buffer[BUFFSIZE - 2];
-            tr2 = (uint8_t) buffer[BUFFSIZE - 1];
+            tr1 = buffer[BUFFSIZE - 2];
+            tr2 = buffer[BUFFSIZE - 1];
         }
         for (int i = 0; i < gcount - 3 + 1; ++i) {
-            int ans = 0;
-            uint8_t a = (uint8_t) buffer[i];
-            ans |= a;
-            ans <<= 8;
-            a = (uint8_t) buffer[i + 1];
-            ans |= a;
-            ans <<= 8;
-            a = (uint8_t) buffer[i + 2];
-            ans |= a;
+            int ans = makeTrig(buffer[i], buffer[i + 1], buffer[i + 2]);
             set.insert(ans);
         }
     }

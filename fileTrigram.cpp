@@ -5,5 +5,4 @@
 
 fileTrigram::fileTrigram(QString name) {
     file = name;
-    trigrams = *(new std::set<int>());
 }

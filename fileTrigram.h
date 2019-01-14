@@ -8,6 +8,7 @@
 #include <QString>
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 struct fileTrigram {
 
@@ -15,7 +16,8 @@ public:
     fileTrigram(QString name);
 public:
     QString file;
-    std::set<int> trigrams;
+    //std::set<int> trigrams;
+    std::unordered_set<int> trigrams;
 };
 
 #endif //FILEMANAGER_FILETRIGRAM_H

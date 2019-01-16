@@ -2,17 +2,6 @@
 #include "ui_mainwindow.h"
 #include "finderOfCopies.h"
 
-
-#include <QCommonStyle>
-#include <QDesktopWidget>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QThread>
-#include <QDirIterator>
-#include <QCryptographicHash>
-#include <fstream>
-#include <iostream>
-
 typedef std::map<QByteArray, QVector<std::pair<QString, int>>>  mapToTree;
 
 
@@ -74,8 +63,6 @@ void main_window::select_directory() {
     ui->treeWidget->clear();
 }
 
-
-
 void main_window::start_search() {
     ui->progressBar->setValue(0);
     ui->pushButton_3->setEnabled(false);
@@ -84,10 +71,6 @@ void main_window::start_search() {
     ui->treeWidget->clear();
     thread = new QThread;
     auto *worker = new finder(curDir);
-
-    //here is your signals
-    //...
-
 
     worker->moveToThread(thread);
 
@@ -101,8 +84,6 @@ void main_window::start_search() {
     time = std::clock();
     ui->stopButton->setEnabled(true);
     thread->start();
-
-
 }
 
 void main_window::setProgress(long long MAXS) {
@@ -149,9 +130,7 @@ void main_window::addToTreeUI(std::map<QByteArray, QVector<std::pair<QString, in
         QFileInfo file_info_temp(cur->second[0].first);
         sumProgress += cur->second.size() * file_info_temp.size();
         ui->progressBar->setValue(ui->progressBar->value() + (int)sumProgress);
-        //ui->progressBar->setValue((int) (100 * sumProgress / sumProgressAll));
     }
-
 }
 
 void main_window::select_useless() {

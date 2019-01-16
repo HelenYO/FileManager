@@ -1,7 +1,3 @@
-//
-// Created by Елена on 09/01/2019.
-//
-
 #ifndef FILEMANAGER_FILETRIGRAM_H
 #define FILEMANAGER_FILETRIGRAM_H
 
@@ -14,10 +10,10 @@ struct fileTrigram {
 
 public:
     fileTrigram();
-    fileTrigram(QString name);
+
+    explicit fileTrigram(QString name);
 public:
     QString file;
-    //std::set<int> trigrams;
     std::unordered_set<int> trigrams;
 };
 

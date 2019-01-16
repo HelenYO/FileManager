@@ -1,7 +1,3 @@
-//
-// Created by Елена on 15/01/2019.
-//
-
 #ifndef FILEMANAGER_TRIGRAM_PROCESS_H
 #define FILEMANAGER_TRIGRAM_PROCESS_H
 
@@ -27,8 +23,8 @@ class finderTrig : public QObject {
 Q_OBJECT
 
 public:
-    finderTrig(QString dir);
-    ~finderTrig();
+    explicit finderTrig(QString dir);
+    ~finderTrig() override;
 
 public slots:
     void process();
@@ -51,6 +47,5 @@ private:
     QString curDir;
     std::vector<QString> files;
 };
-
 
 #endif //FILEMANAGER_TRIGRAM_PROCESS_H

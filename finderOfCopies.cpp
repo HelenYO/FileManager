@@ -21,15 +21,11 @@ void finder::find_copies(QVector<std::pair<QString, int>> vec,
                               std::vector<std::ifstream> &streams, int degree) {
 
     try {
-
-
         auto cancellation_point = [thread = QThread::currentThread(), this]() {
             if (thread->isInterruptionRequested()) {
                 throw cancellation_exception();
             }
         };
-        //
-
 
         QCryptographicHash sha(QCryptographicHash::Sha3_256);
         std::map<QByteArray, QVector<std::pair<QString, int>>> hashs;
@@ -77,13 +73,9 @@ void finder::scan_directory() {
                 throw cancellation_exception();
             }
         };
-
-//    emit increaseBar(0);
-        //ui->progressBar->setValue(0);
         std::clock_t time = std::clock();
         QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
 
-        //ui->treeWidget->clear();
         std::map<qint64, QVector<QString>> files;
         while (it.hasNext()) {
             cancellation_point();
@@ -100,7 +92,6 @@ void finder::scan_directory() {
 
         cancellation_point();
 
-        //
 
         long long sumProgressAll = 0;
 
@@ -111,7 +102,6 @@ void finder::scan_directory() {
 
         emit setProgressBar(sumProgressAll);
 
-        //
 
         QCryptographicHash sha(QCryptographicHash::Sha3_256);
         for (auto i = files.begin(); i != files.end(); ++i) {
@@ -160,24 +150,6 @@ void finder::scan_directory() {
                 //
             }
         }
-
-//    time = std::clock() - time;
-//
-//    if (!wasDuplicate) {
-//        auto *item = new QTreeWidgetItem(ui->treeWidget);
-//        item->setText(0, QString("Not Found Duplicates!)"));
-//        ui->pushButton_3->setEnabled(false);
-//    } else {
-//        auto *item = new QTreeWidgetItem(ui->treeWidget);
-//        item->setText(0, QString("In total: ") + QString::number(sum) + QString(" bytes!! (") +
-//                         QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
-//        ui->pushButton_3->setEnabled(true);
-//
-//    }
-//    wasDuplicate = false;
-//    sum = 0;
-//    sumProgressAll = 0;
-//    sumProgress = 0;
 
         std::cout << "I WAS HERE IN THREAD";
 

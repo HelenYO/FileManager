@@ -1,7 +1,3 @@
-//
-// Created by Елена on 11/01/2019.
-//
-
 #ifndef FILEMANAGER_FINDEROFSTRINGS_H
 #define FILEMANAGER_FINDEROFSTRINGS_H
 
@@ -53,9 +49,6 @@ private:
     QString curDir;
     std::string sub;
     std::vector<fileTrigram> files;
-
-
 };
-
 
 #endif //FILEMANAGER_FINDEROFSTRINGS_H

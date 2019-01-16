@@ -42,7 +42,6 @@ private:
     std::unique_ptr<Ui::mainwindow1> ui;
     QString curDir;
     std::vector<fileTrigram> files;
-    //std::vector<std::pair<QString, std::vector<std::pair<int, int>>>> contains;
     QThread* thread = nullptr;
     QThread* threadTrig = nullptr;
     std::clock_t time;

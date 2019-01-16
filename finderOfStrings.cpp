@@ -1,9 +1,4 @@
-//
-// Created by Елена on 11/01/2019.
-//
-
 #include "finderOfStrings.h"
-#include <array>
 
 struct cancellation_exception : std::exception {
     const char *what() const noexcept override {
@@ -11,11 +6,10 @@ struct cancellation_exception : std::exception {
     }
 };
 
-
 finderSub::finderSub(QString dir, std::string strSub, std::vector<fileTrigram> filestemp) {
-    curDir = dir;
-    sub = strSub;
-    files = filestemp;
+    curDir = std::move(dir);
+    sub = std::move(strSub);
+    files = std::move(filestemp);
 }
 
 finderSub::~finderSub() = default;
@@ -38,7 +32,7 @@ void finderSub::scan_directory() {
             for (int i = 0; i < sub.size() - 3 + 1; ++i) {
                 cancellation_point();
                 int trig = 0;
-                uint8_t a = (uint8_t) sub[i];
+                auto a = (uint8_t) sub[i];
                 trig |= a;
                 trig <<= 8;
                 a = (uint8_t) sub[i + 1];
@@ -53,17 +47,17 @@ void finderSub::scan_directory() {
 
         cancellation_point();
 
-        for (int i = 0; i < files.size(); ++i) {
+        for (auto &file : files) {
             cancellation_point();
             bool contain = true;
-            for (int j = 0; j < subTrig.size(); ++j) {
-                if (files[i].trigrams.end() == files[i].trigrams.find(subTrig[j])) {
+            for (int j : subTrig) {
+                if (file.trigrams.end() == file.trigrams.find(j)) {
                     contain = false;
                     break;
                 }
             }
             if (contain) {
-                std::ifstream fin(files[i].file.toStdString(), std::ios::binary);
+                std::ifstream fin(file.file.toStdString(), std::ios::binary);
                 std::string text;
                 std::string pat = sub;
                 int number = 0;
@@ -90,18 +84,14 @@ void finderSub::scan_directory() {
                     }
                 }
 
-                if (thisLine.size() != 0) {
-                    //contains.push_back({files[i].file, thisLine});
-                    emit addToTree({files[i].file, thisLine});
+                if (!thisLine.empty()) {
+                    emit addToTree({file.file, thisLine});
                 }
             }
             emit updateProgressBar();
         }
-
-
         emit finished();
     } catch (std::exception &ex) {
-        std::cout << " i break((";
         emit error();
     }
 }

@@ -3,20 +3,6 @@
 #include "finderOfStrings.h"
 #include "trigram_process.h"
 
-#include <QDirIterator>
-#include <QFileDialog>
-#include <fstream>
-#include <iostream>
-#include <QCommonStyle>
-#include <QDesktopWidget>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QThread>
-#include <QDirIterator>
-#include <QCryptographicHash>
-#include <fstream>
-#include <iostream>
-
 typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
 subFind::subFind(QWidget *parent) :
@@ -35,10 +21,8 @@ subFind::subFind(QWidget *parent) :
 
     qRegisterMetaType<myPair>("myPair");
     qRegisterMetaType<fileTrigram>("fileTrigram");
-    //qRegisterMetaType<fileTrigram>("fileTrigram");
     fsWatcher = new QFileSystemWatcher(this);
     connect(fsWatcher, SIGNAL(fileChanged(QString)), this, SLOT(changed(QString)));
-
 }
 
 subFind::~subFind() {
@@ -86,16 +70,6 @@ void subFind::startPreprocess() {
     ui->label->clear();
     ui->label->setText("Preprocessing");
     ui->pushButtonStopPreprocess->setEnabled(true);
-
-
-//    int sum = 0;
-//    QDirIterator git(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-//    while (git.hasNext()) {
-//        ++sum;
-//    }
-//    int sum = 8;
-
-//    ui->progressBarPreprocess->setMaximum(sum);
     ui->progressBarPreprocess->setValue(0);
 
     threadTrig = new QThread;
@@ -162,7 +136,7 @@ void subFind::start_find() {
     ui->buttonStop->setEnabled(true);
     std::string sub = ui->lineEditSubString->text().toStdString();
 
-    ui->progressBar->setMaximum(files.size());
+    ui->progressBar->setMaximum(static_cast<int>(files.size()));
     thread = new QThread;
     auto *worker = new finderSub(curDir, sub, files);
     worker->moveToThread(thread);
@@ -194,7 +168,7 @@ void subFind::doFinishThings() {
     ui->label->clear();
     ui->label->setText(QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
     ui->buttonStop->setEnabled(false);
-    for(int i = static_cast<int>(toChange.size() - 1); i >= 0; i--) {
+    for(auto i = static_cast<int>(toChange.size() - 1); i >= 0; i--) {
         change(toChange[i]);
     }
     toChange.clear();
@@ -206,13 +180,13 @@ void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> a
     QString temp = add.first.mid(curDir.length() + 1, add.first.length() - curDir.length());
     temp += "    founded: ";
     item->setText(0, temp);
-    for (int j = 0; j < add.second.size(); j++) {
+    for (auto &j : add.second) {
         auto *itemchild = new QTreeWidgetItem(item);
         QString tempi = "";
         tempi += "in ";
-        tempi += QString::number(add.second[j].first);
+        tempi += QString::number(j.first);
         tempi += " line ";
-        tempi += QString::number(add.second[j].second) + " times";
+        tempi += QString::number(j.second) + " times";
         itemchild->setText(0, tempi);
     }
 }

@@ -9,9 +9,9 @@ struct cancellation_exception : std::exception {
 
 unsigned long long BUFFSIZE = 100;
 
-finderTrig::finderTrig(QString dir) : curDir(dir) {}
+finderTrig::finderTrig(QString dir) : curDir(std::move(dir)) {}
 
-finderTrig::~finderTrig() {}
+finderTrig::~finderTrig() = default;
 
 void finderTrig::process() {
     startPreprocessing();
@@ -38,19 +38,15 @@ void finderTrig::startPreprocessing() {
             }
         }
         emit setBar(static_cast<int>(files.size()));
-        for (int i = 0; i < files.size(); i++) {
+        for (const auto &i : files) {
             cancellation_point();
-            fileTrigram file(files[i]);
+            fileTrigram file(i);
             addTrigrams(file);
-            emit addToWatcher(files[i]);
-
-
-            //std::cout << file.file.toStdString() << file.trigrams.size() << "\n";
+            emit addToWatcher(i);
             emit addFileTrigrams(file);
             emit increaseBarTrig();
         }
     } catch (std::exception &ex) {
-        std::cout << " i break((";
         emit error();
     }
 }
@@ -89,10 +85,6 @@ int finderTrig::makeTrig(char a, char b, char c) {
 
 void finderTrig::addTrigrams(fileTrigram &file) {
 
-
-    //std::cout << file.file.toStdString() << "\n";
-
-
     std::ifstream fin(file.file.toStdString(), std::ios::binary);
     int gcount = -1;
     char tr1 = '\0';
@@ -103,7 +95,6 @@ void finderTrig::addTrigrams(fileTrigram &file) {
         gcount = static_cast<int>(fin.gcount());
         if (gcount != -1) {
             int ans1 = makeTrig(tr1, tr2, buffer[0]);
-
 
             file.trigrams.insert(ans1);
             if (gcount > 1) {

@@ -3,6 +3,7 @@
 //
 #include "fileTrigram.h"
 
+fileTrigram::fileTrigram() = default;
 fileTrigram::fileTrigram(QString name) {
     file = name;
 }

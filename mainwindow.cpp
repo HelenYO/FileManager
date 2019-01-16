@@ -111,7 +111,6 @@ void main_window::setProgress(long long MAXS) {
 
 void main_window::doFinishThings() {
     ui->stopButton->setEnabled(false);
-    ui->progressBar->maximum();
     time = std::clock() - time;
 
     if (ui->treeWidget->topLevelItemCount() == 0) {

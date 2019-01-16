@@ -52,7 +52,6 @@ void finderSub::scan_directory() {
         }
 
         cancellation_point();
-        //contains = *(new std::vector<std::pair<QString, std::vector<std::pair<int, int>>>>());
 
         for (int i = 0; i < files.size(); ++i) {
             cancellation_point();

@@ -17,7 +17,6 @@
 #include <fstream>
 #include <iostream>
 
-
 typedef std::pair<QString, std::vector<std::pair<int, int>>> myPair;
 
 subFind::subFind(QWidget *parent) :
@@ -27,19 +26,25 @@ subFind::subFind(QWidget *parent) :
     ui->buttonFind->setEnabled(true);
     ui->buttonStop->setEnabled(false);
     ui->progressBar->setValue(0);
+    ui->progressBarPreprocess->setValue(0);
     ui->label->clear();
     connect(ui->buttonSelectDir, &QPushButton::clicked, this, &subFind::select_directory);
     connect(ui->buttonFind, &QPushButton::clicked, this, &subFind::start_find);
     connect(ui->buttonStop, &QPushButton::clicked, this, &subFind::interruption);
-
+    connect(ui->pushButtonStopPreprocess, &QPushButton::clicked, this, &subFind::interruptionTrig);
 
     qRegisterMetaType<myPair>("myPair");
+    qRegisterMetaType<fileTrigram>("fileTrigram");
+    //qRegisterMetaType<fileTrigram>("fileTrigram");
     fsWatcher = new QFileSystemWatcher(this);
     connect(fsWatcher, SIGNAL(fileChanged(QString)), this, SLOT(changed(QString)));
 
 }
 
-subFind::~subFind() = default;
+subFind::~subFind() {
+    interruption();
+    interruptionTrig();
+}
 
 void subFind::change(QString path) {
     ui->label->clear();
@@ -71,14 +76,28 @@ void subFind::select_directory() {
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
 
+    ui->label->clear();
     startPreprocess();
 }
 
 void subFind::startPreprocess() {
     files.clear();
     ui->buttonFind->setEnabled(false);
-    //ui->label->clear();
+    ui->label->clear();
     ui->label->setText("Preprocessing");
+    ui->pushButtonStopPreprocess->setEnabled(true);
+
+
+//    int sum = 0;
+//    QDirIterator git(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
+//    while (git.hasNext()) {
+//        ++sum;
+//    }
+//    int sum = 8;
+
+//    ui->progressBarPreprocess->setMaximum(sum);
+    ui->progressBarPreprocess->setValue(0);
+
     threadTrig = new QThread;
     auto *worker = new finderTrig(curDir);
     worker->moveToThread(threadTrig);
@@ -88,8 +107,14 @@ void subFind::startPreprocess() {
     connect(worker, SIGNAL(addFileTrigrams(fileTrigram)), this, SLOT(addFileTrigramsToFiles(fileTrigram)));
     connect(worker, SIGNAL(finished()), this, SLOT(finishThings()));
     connect(worker, SIGNAL(addToWatcher(QString)), this, SLOT(addToFSWatcher(QString)));
+    connect(worker, SIGNAL(increaseBarTrig()), this, SLOT(increaseBar()));
+    connect(worker, SIGNAL(setBar(int)), this, SLOT(set_max_index_bar(int)));
 
     threadTrig->start();
+}
+
+void subFind::set_max_index_bar(int max) {
+    ui->progressBarPreprocess->setMaximum(max);
 }
 
 void subFind::addToFSWatcher(QString name) {
@@ -100,6 +125,7 @@ void subFind::finishThings() {
     ui->buttonFind->setEnabled(true);
     ui->label->clear();
     ui->label->setText("Preprocessing is finished");
+    ui->pushButtonStopPreprocess->setEnabled(false);
 }
 
 void subFind::addFileTrigramsToFiles(fileTrigram add) {
@@ -111,6 +137,14 @@ void subFind::interruption() {
         thread->requestInterruption();
         ui->label->setText("Stopped");
         ui->buttonStop->setEnabled(false);
+    }
+}
+
+void subFind::interruptionTrig() {
+    if(threadTrig) {
+        threadTrig->requestInterruption();
+        ui->label->setText("Stopped");
+        ui->pushButtonStopPreprocess->setEnabled(false);
     }
 }
 
@@ -147,8 +181,11 @@ void subFind::updBar() {
     ui->progressBar->setValue(ui->progressBar->value() + 1);
 }
 
+void subFind::increaseBar() {
+    ui->progressBarPreprocess->setValue(ui->progressBarPreprocess->value() + 1);
+}
+
 void subFind::doFinishThings() {
-    ui->progressBar->maximum();
     time = std::clock() - time;
     if (ui->treeWidget->topLevelItemCount() == 0) {
         auto *item = new QTreeWidgetItem(ui->treeWidget);
@@ -157,7 +194,7 @@ void subFind::doFinishThings() {
     ui->label->clear();
     ui->label->setText(QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
     ui->buttonStop->setEnabled(false);
-    for(int i = toChange.size() - 1; i >= 0; i--) {
+    for(int i = static_cast<int>(toChange.size() - 1); i >= 0; i--) {
         change(toChange[i]);
     }
     toChange.clear();

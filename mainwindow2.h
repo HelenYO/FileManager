@@ -26,16 +26,17 @@ private slots:
     void addFileTrigramsToFiles(fileTrigram add);
     void finishThings();
     void addToFSWatcher(QString name);
+    void increaseBar();
+    void set_max_index_bar(int max);
 
 private:
     void select_directory();
     void startPreprocess();
-    //void addTrigrams(QString name, std::unordered_set<int> &set);
     void start_find();
     void interruption();
     void interruptionStart();
     void change(QString path);
-    //bool check(QString name);
+    void interruptionTrig();
 
 private:
     std::unique_ptr<Ui::mainwindow1> ui;
@@ -50,5 +51,3 @@ private:
 };
 
 #endif // MAINWINDOW2_H
-
-

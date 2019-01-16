@@ -6,6 +6,7 @@
 #define FILEMANAGER_TRIGRAM_PROCESS_H
 
 #include <QThread>
+#include <QObject>
 #include <QCommonStyle>
 #include <QDesktopWidget>
 #include <QFileDialog>
@@ -22,7 +23,7 @@
 
 #include "fileTrigram.h"
 
-class finderTrig: public QMainWindow {
+class finderTrig : public QObject {
 Q_OBJECT
 
 public:
@@ -36,16 +37,19 @@ signals:
     void addFileTrigrams(fileTrigram file);
     void finished();
     void addToWatcher(QString name);
+    void increaseBarTrig();
+    void setBar(int max);
+    void error();
 
 public:
     void startPreprocessing();
     bool check(QString name);
     static int makeTrig(char a, char b, char c);
-    //void addTrigrams(QString const name, std::unordered_set<int> &set);
     static void addTrigrams(fileTrigram &file);
 
 private:
     QString curDir;
+    std::vector<QString> files;
 };
 
 

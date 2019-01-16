@@ -1,14 +1,15 @@
-//
-// Created by Елена on 15/01/2019.
-//
-
 #include <unordered_set>
 #include "trigram_process.h"
 
+struct cancellation_exception : std::exception {
+    const char *what() const noexcept override {
+        return "Stop thread";
+    }
+};
 
 unsigned long long BUFFSIZE = 100;
 
-finderTrig::finderTrig(QString dir) : curDir(dir){}
+finderTrig::finderTrig(QString dir) : curDir(dir) {}
 
 finderTrig::~finderTrig() {}
 
@@ -18,16 +19,39 @@ void finderTrig::process() {
 }
 
 void finderTrig::startPreprocessing() {
-    QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-    while (it.hasNext()) {
-        QFileInfo file_info(it.next());
-        QString name = file_info.absoluteFilePath();
-        if(check(name) ) {
-            fileTrigram file(name);
-            addTrigrams(file);
-            emit addToWatcher(name);
-            emit addFileTrigrams(file);
+    try {
+
+        auto cancellation_point = [thread = QThread::currentThread(), this]() {
+            if (thread->isInterruptionRequested()) {
+                throw cancellation_exception();
+            }
+        };
+
+        QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
+        files.clear();
+        while (it.hasNext()) {
+            cancellation_point();
+            QFileInfo file_info(it.next());
+            QString name = file_info.absoluteFilePath();
+            if (check(name)) {
+                files.push_back(name);
+            }
         }
+        emit setBar(static_cast<int>(files.size()));
+        for (int i = 0; i < files.size(); i++) {
+            cancellation_point();
+            fileTrigram file(files[i]);
+            addTrigrams(file);
+            emit addToWatcher(files[i]);
+
+
+            //std::cout << file.file.toStdString() << file.trigrams.size() << "\n";
+            emit addFileTrigrams(file);
+            emit increaseBarTrig();
+        }
+    } catch (std::exception &ex) {
+        std::cout << " i break((";
+        emit error();
     }
 }
 
@@ -37,13 +61,14 @@ bool finderTrig::check(QString name) {
 //    if ((sub == "txt") || (sub == "tex") || (sub == "log")) {
 //        return true;
 //    }
-//    if ((sub == "mp3") || (sub == "jpg") || (sub == "zip") || (sub == "rar") || (sub == ".7z") || (sub == "dmg") || (sub == "jar") || (sub == "png")) {
+//    if ((sub == "mp3") || (sub == "jpg") || (sub == "zip") || (sub == "rar")
+//        || (sub == ".7z") || (sub == "dmg") || (sub == "jar") || (sub == "png")) {
 //        return false;
 //    }
     std::vector<char> buffer(BUFFSIZE * 100);
     fin.read(buffer.data(), (int) BUFFSIZE * 100);
-    for (int i = 0 ; i < fin.gcount(); i++) {
-        if (buffer[i] !=  '\0') {
+    for (int i = 0; i < fin.gcount(); i++) {
+        if (buffer[i] != '\0') {
 
         } else {
             return false;
@@ -52,19 +77,22 @@ bool finderTrig::check(QString name) {
     return true;
 }
 
-
 int finderTrig::makeTrig(char a, char b, char c) {
     int ans = 0;
-    ans |= (uint8_t)a;
+    ans |= (uint8_t) a;
     ans <<= 8;
-    ans |= (uint8_t)b;
+    ans |= (uint8_t) b;
     ans <<= 8;
-    ans |= (uint8_t)c;
+    ans |= (uint8_t) c;
     return ans;
 }
 
-//void finderTrig::addTrigrams(QString const name, std::unordered_set<int> &set) {
 void finderTrig::addTrigrams(fileTrigram &file) {
+
+
+    //std::cout << file.file.toStdString() << "\n";
+
+
     std::ifstream fin(file.file.toStdString(), std::ios::binary);
     int gcount = -1;
     char tr1 = '\0';
@@ -75,11 +103,11 @@ void finderTrig::addTrigrams(fileTrigram &file) {
         gcount = static_cast<int>(fin.gcount());
         if (gcount != -1) {
             int ans1 = makeTrig(tr1, tr2, buffer[0]);
-            //set.insert(ans1);
+
+
             file.trigrams.insert(ans1);
             if (gcount > 1) {
                 int ans2 = makeTrig(tr2, buffer[0], buffer[1]);
-                //set.insert(ans2);
                 file.trigrams.insert(ans2);
             }
         }
@@ -89,7 +117,6 @@ void finderTrig::addTrigrams(fileTrigram &file) {
         }
         for (int i = 0; i < gcount - 3 + 1; ++i) {
             int ans = makeTrig(buffer[i], buffer[i + 1], buffer[i + 2]);
-            //set.insert(ans);
             file.trigrams.insert(ans);
         }
     }

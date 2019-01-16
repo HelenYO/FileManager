@@ -13,6 +13,7 @@
 struct fileTrigram {
 
 public:
+    fileTrigram();
     fileTrigram(QString name);
 public:
     QString file;

@@ -29,9 +29,9 @@ private:
 
 
 public:
-    finder(QString dir);
+    explicit finder(QString dir);
 
-    ~finder();
+    ~finder() override;
 
 public slots:
 
@@ -49,13 +49,9 @@ signals:
 
     void addToTree(std::map<QByteArray, QVector<std::pair<QString, int>>> hashs);
 
-
-
-
 private:
     QString curDir;
 
 };
-
 
 #endif //FILEMANAGER_FINDEROFCOPIES_H

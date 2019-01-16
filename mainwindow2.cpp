@@ -41,7 +41,7 @@ subFind::subFind(QWidget *parent) :
 
 subFind::~subFind() = default;
 
-void subFind::changed(QString path) {
+void subFind::change(QString path) {
     ui->label->clear();
     ui->label->setText(path + " was changed");
     int index = 0;
@@ -51,9 +51,16 @@ void subFind::changed(QString path) {
             break;
         }
     }
-    //files[index].trigrams = *new std::set<int>();
     files[index].trigrams.clear();
-    //addTrigrams(path, files[index].trigrams);//todo:make changes
+    finderTrig::addTrigrams(files[index]);
+}
+
+void subFind::changed(QString path) {
+    if(thread && thread->isRunning()){
+        toChange.push_back(path);
+    } else {
+        change(path);
+    }
 }
 
 void subFind::select_directory() {
@@ -64,14 +71,13 @@ void subFind::select_directory() {
     setWindowTitle(QString("Directory Content - %1").arg(dir));
     curDir = dir;
 
-    //startPreprocessing();
     startPreprocess();
 }
 
 void subFind::startPreprocess() {
     files.clear();
     ui->buttonFind->setEnabled(false);
-    ui->label->clear();
+    //ui->label->clear();
     ui->label->setText("Preprocessing");
     threadTrig = new QThread;
     auto *worker = new finderTrig(curDir);
@@ -81,8 +87,13 @@ void subFind::startPreprocess() {
     connect(worker, SIGNAL(finished()), threadTrig, SLOT(quit()));
     connect(worker, SIGNAL(addFileTrigrams(fileTrigram)), this, SLOT(addFileTrigramsToFiles(fileTrigram)));
     connect(worker, SIGNAL(finished()), this, SLOT(finishThings()));
+    connect(worker, SIGNAL(addToWatcher(QString)), this, SLOT(addToFSWatcher(QString)));
 
     threadTrig->start();
+}
+
+void subFind::addToFSWatcher(QString name) {
+    fsWatcher->addPath(name);
 }
 
 void subFind::finishThings() {
@@ -146,6 +157,10 @@ void subFind::doFinishThings() {
     ui->label->clear();
     ui->label->setText(QString::number(time / CLOCKS_PER_SEC) + QString(" sec)"));
     ui->buttonStop->setEnabled(false);
+    for(int i = toChange.size() - 1; i >= 0; i--) {
+        change(toChange[i]);
+    }
+    toChange.clear();
 }
 
 void subFind::addToTreeUI(std::pair<QString, std::vector<std::pair<int, int>>> add) {

@@ -19,16 +19,13 @@ void finderTrig::process() {
 
 void finderTrig::startPreprocessing() {
     QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
-//    files.clear();
     while (it.hasNext()) {
         QFileInfo file_info(it.next());
         QString name = file_info.absoluteFilePath();
         if(check(name) ) {
             fileTrigram file(name);
-            //files.emplace_back(name);
-            //addTrigrams(name, files[files.size() - 1].trigrams);
             addTrigrams(file);
-            //fsWatcher->addPath(name);//todo: fsWatcher
+            emit addToWatcher(name);
             emit addFileTrigrams(file);
         }
     }

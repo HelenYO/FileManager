@@ -25,6 +25,7 @@ private slots:
     void changed(QString path);
     void addFileTrigramsToFiles(fileTrigram add);
     void finishThings();
+    void addToFSWatcher(QString name);
 
 private:
     void select_directory();
@@ -33,6 +34,7 @@ private:
     void start_find();
     void interruption();
     void interruptionStart();
+    void change(QString path);
     //bool check(QString name);
 
 private:
@@ -44,6 +46,7 @@ private:
     QThread* threadTrig = nullptr;
     std::clock_t time;
     QFileSystemWatcher *fsWatcher;
+    std::vector<QString> toChange;
 };
 
 #endif // MAINWINDOW2_H

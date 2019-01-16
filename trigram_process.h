@@ -35,13 +35,14 @@ public slots:
 signals:
     void addFileTrigrams(fileTrigram file);
     void finished();
+    void addToWatcher(QString name);
 
-private:
+public:
     void startPreprocessing();
     bool check(QString name);
-    int makeTrig(char a, char b, char c);
+    static int makeTrig(char a, char b, char c);
     //void addTrigrams(QString const name, std::unordered_set<int> &set);
-    void addTrigrams(fileTrigram &file);
+    static void addTrigrams(fileTrigram &file);
 
 private:
     QString curDir;

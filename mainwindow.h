@@ -26,7 +26,6 @@ private slots:
     void addToTreeUI(std::map<QByteArray, QVector<std::pair<QString, int>>> hashs);
     void setProgress(long long MAXS);
     void doFinishThings();
-    void stop();
     void interruption();
 
 private:

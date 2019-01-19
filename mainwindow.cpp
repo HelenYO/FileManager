@@ -45,10 +45,6 @@ void main_window::interruption() {
 
 main_window::~main_window() = default;
 
-void main_window::stop() {
-
-}
-
 void main_window::select_directory() {
     QString dir = QFileDialog::getExistingDirectory(this, "Select Directory for Scanning",
                                                     QString(),
@@ -160,6 +156,6 @@ void main_window::delete_useless() {
     }
 }
 
-void main_window::show_about_dialog() {
+void main_window::show_about_dialog() {//NOLINT
     QMessageBox::aboutQt(this);
 }

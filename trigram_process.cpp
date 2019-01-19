@@ -73,8 +73,8 @@ bool finderTrig::check(QString name) {
     return true;
 }
 
-int finderTrig::makeTrig(char a, char b, char c) {
-    int ans = 0;
+uint32_t finderTrig::makeTrig(char a, char b, char c) {
+    uint32_t ans = 0;
     ans |= (uint8_t) a;
     ans <<= 8;
     ans |= (uint8_t) b;
@@ -94,11 +94,11 @@ void finderTrig::addTrigrams(fileTrigram &file) {
         fin.read(buffer.data(), (int) BUFFSIZE);
         gcount = static_cast<int>(fin.gcount());
         if (gcount != -1) {
-            int ans1 = makeTrig(tr1, tr2, buffer[0]);
+            uint32_t ans1 = makeTrig(tr1, tr2, buffer[0]);
 
             file.trigrams.insert(ans1);
             if (gcount > 1) {
-                int ans2 = makeTrig(tr2, buffer[0], buffer[1]);
+                uint32_t ans2 = makeTrig(tr2, buffer[0], buffer[1]);
                 file.trigrams.insert(ans2);
             }
         }
@@ -107,7 +107,7 @@ void finderTrig::addTrigrams(fileTrigram &file) {
             tr2 = buffer[BUFFSIZE - 1];
         }
         for (int i = 0; i < gcount - 3 + 1; ++i) {
-            int ans = makeTrig(buffer[i], buffer[i + 1], buffer[i + 2]);
+            uint32_t ans = makeTrig(buffer[i], buffer[i + 1], buffer[i + 2]);
             file.trigrams.insert(ans);
         }
     }

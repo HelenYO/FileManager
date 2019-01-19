@@ -27,11 +27,11 @@ void finderSub::scan_directory() {
             }
         };
 
-        std::vector<int> subTrig;
+        std::vector<uint32_t> subTrig;
         if (sub.size() > 2) {
             for (int i = 0; i < sub.size() - 3 + 1; ++i) {
                 cancellation_point();
-                int trig = 0;
+                uint32_t trig = 0;
                 auto a = (uint8_t) sub[i];
                 trig |= a;
                 trig <<= 8;
@@ -50,7 +50,7 @@ void finderSub::scan_directory() {
         for (auto &file : files) {
             cancellation_point();
             bool contain = true;
-            for (int j : subTrig) {
+            for (uint32_t j : subTrig) {
                 if (file.trigrams.end() == file.trigrams.find(j)) {
                     contain = false;
                     break;

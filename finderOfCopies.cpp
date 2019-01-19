@@ -1,5 +1,4 @@
 #include "finderOfCopies.h"
-#include <array>
 
 struct cancellation_exception : std::exception {
     const char *what() const noexcept override {
@@ -12,7 +11,7 @@ void finder::process() {
 }
 
 finder::finder(QString dir){
-    curDir = dir;
+    curDir = dir; //NOLINT
 }
 finder::~finder() = default;
 
@@ -54,7 +53,7 @@ void finder::find_copies(QVector<std::pair<QString, int>> vec,
         if (gcount == 0) {
             emit addToTree(hashs);
         } else {
-            for (auto ivec : hashs) {
+            for (auto &ivec : hashs) {
                 cancellation_point();
                 if (degree < 20) find_copies(ivec.second, streams, degree + 1);
                 else find_copies(ivec.second, streams, degree);
@@ -73,7 +72,7 @@ void finder::scan_directory() {
                 throw cancellation_exception();
             }
         };
-        std::clock_t time = std::clock();
+        //std::clock_t time = std::clock();
         QDirIterator it(curDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories); //
 
         std::map<qint64, QVector<QString>> files;
@@ -137,7 +136,7 @@ void finder::scan_directory() {
                 //
 
                 //рекурсивный поиск
-                for (auto vec: hashsFirstIter) {
+                for (auto &vec: hashsFirstIter) {
                     cancellation_point();
 
                     std::vector<std::ifstream> streams((unsigned long long) (vec.second.size()));

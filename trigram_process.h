@@ -40,7 +40,7 @@ signals:
 public:
     void startPreprocessing();
     bool check(QString name);
-    static int makeTrig(char a, char b, char c);
+    static uint32_t makeTrig(char a, char b, char c);
     static void addTrigrams(fileTrigram &file);
 
 private:

@@ -14,7 +14,7 @@ public:
     explicit fileTrigram(QString name);
 public:
     QString file;
-    std::unordered_set<int> trigrams;
+    std::unordered_set<uint32_t> trigrams;
 };
 
 #endif //FILEMANAGER_FILETRIGRAM_H

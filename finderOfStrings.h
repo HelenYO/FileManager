@@ -19,6 +19,7 @@
 #include "fileTrigram.h"
 
 
+
 class finderSub : public QObject {
     Q_OBJECT
 

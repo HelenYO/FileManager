@@ -28,6 +28,6 @@ add_executable(FileManager
 
 target_link_libraries(FileManager Qt5::Core)
 target_link_libraries(FileManager Qt5::Widgets)
-target_link_libraries(FileManager stdc++fs)
+#target_link_libraries(FileManager stdc++fs)
 
 qt5_use_modules(FileManager Widgets)

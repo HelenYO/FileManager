@@ -1,4 +1,6 @@
 #include "finderOfStrings.h"
+#include "experimental/algorithm"
+#include "experimental/functional"
 
 struct cancellation_exception : std::exception {
     const char *what() const noexcept override {
@@ -69,14 +71,14 @@ void finderSub::scan_directory() {
                     std::getline(fin, text);
 
                     int ans = 0;
-                    auto it = std::search(text.begin(), text.end(),
-                                          std::boyer_moore_searcher(
+                    auto it = std::experimental::search(text.begin(), text.end(),
+                                          std::experimental::boyer_moore_searcher(
                                                   pat.begin(), pat.end()));
                     while (it != text.end()) {
                         ans++;
 
-                        it = std::search(it + 1, text.end(),
-                                         std::boyer_moore_searcher(
+                        it = std::experimental::search(it + 1, text.end(),
+                                          std::experimental::boyer_moore_searcher(
                                                  pat.begin(), pat.end()));
                     }
                     if (ans != 0) {

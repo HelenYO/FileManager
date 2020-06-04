@@ -1,3 +1,4 @@
+#include <array>
 #include "finderOfCopies.h"
 
 struct cancellation_exception : std::exception {
@@ -116,7 +117,7 @@ void finder::scan_directory() {
                     std::ifstream fin(name.toStdString(), std::ios::binary);
                     int gcount = 0;
                     if (fin.is_open()) {
-                        std::array<char, 4> buffer{};
+                        std::array<char, 4> buffer;
                         fin.read(buffer.data(), buffer.size());
                         gcount = static_cast<int>(fin.gcount());
                         sha.addData(buffer.data(), gcount);

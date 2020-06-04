@@ -1,5 +1,5 @@
 #include "mainwindow2.h"
-#include "ui_mainwindow1.h"
+#include "ui_MainWindow1.h"
 #include "finderOfStrings.h"
 #include "trigram_process.h"
 
